@@ -1,0 +1,25 @@
+{% load genealogy_extras %}
+<div class="pedigree-node">
+    <a href="{% url 'person-tree' node.person.pk %}" class="pedigree-card sex-{{ node.person.sex|lower }}" title="Voir l'arbre de {{ node.person.full_name }}">
+        <span class="pedigree-name">{{ node.person.full_name }}</span>
+        <span class="pedigree-dates">{% person_years node.person %}</span>
+    </a>
+    {% if node.father or node.mother %}
+        <div class="pedigree-parents">
+            <div class="pedigree-parent">
+                {% if node.father %}
+                    {% include "genealogy/_ancestors_node.html" with node=node.father %}
+                {% else %}
+                    <div class="pedigree-node"><span class="pedigree-card pedigree-unknown">Inconnu</span></div>
+                {% endif %}
+            </div>
+            <div class="pedigree-parent">
+                {% if node.mother %}
+                    {% include "genealogy/_ancestors_node.html" with node=node.mother %}
+                {% else %}
+                    <div class="pedigree-node"><span class="pedigree-card pedigree-unknown">Inconnue</span></div>
+                {% endif %}
+            </div>
+        </div>
+    {% endif %}
+</div>

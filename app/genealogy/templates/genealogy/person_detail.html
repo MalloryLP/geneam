@@ -8,6 +8,12 @@
     <h1>{{ person.full_name }}</h1>
     <p class="muted">{{ person.get_sex_display }}</p>
 
+    <div class="action-bar">
+        <a href="{% url 'person-tree' person.pk %}" class="btn btn-primary">Voir l'arbre</a>
+        <a href="{% url 'person-edit' person.pk %}" class="btn btn-secondary">Modifier</a>
+        <a href="{% url 'person-delete' person.pk %}" class="btn btn-danger">Supprimer</a>
+    </div>
+
     <section>
         <h2>État civil</h2>
         <ul>
@@ -22,23 +28,72 @@
     </section>
 
     <section>
-        <h2>Parents</h2>
-        {% if parents %}
-            <ul>{% for p in parents %}<li><a href="{% url 'person-detail' p.pk %}">{{ p.full_name }}</a></li>{% endfor %}</ul>
+        <div class="section-header">
+            <h2>Parents</h2>
+            <a href="{% url 'add-parent' person.pk %}" class="btn btn-small">+ Ajouter un parent</a>
+        </div>
+        {% if parentages_as_child %}
+            <ul class="relative-list">
+                {% for link in parentages_as_child %}
+                    <li>
+                        <a href="{% url 'person-detail' link.parent.pk %}">{{ link.parent.full_name }}</a>
+                        <span class="muted">({{ link.get_relation_type_display }})</span>
+                        <form action="{% url 'remove-parentage' link.pk %}" method="post" class="inline-form">
+                            {% csrf_token %}
+                            <input type="hidden" name="redirect_to" value="{{ person.pk }}">
+                            <button type="submit" class="link-danger" onclick="return confirm('Retirer ce lien de filiation ?');">Retirer</button>
+                        </form>
+                    </li>
+                {% endfor %}
+            </ul>
         {% else %}<p class="muted">Aucun parent renseigné.</p>{% endif %}
     </section>
 
     <section>
-        <h2>Enfants</h2>
-        {% if children %}
-            <ul>{% for c in children %}<li><a href="{% url 'person-detail' c.pk %}">{{ c.full_name }}</a></li>{% endfor %}</ul>
+        <div class="section-header">
+            <h2>Enfants</h2>
+            <a href="{% url 'add-child' person.pk %}" class="btn btn-small">+ Ajouter un enfant</a>
+        </div>
+        {% if parentages_as_parent %}
+            <ul class="relative-list">
+                {% for link in parentages_as_parent %}
+                    <li>
+                        <a href="{% url 'person-detail' link.child.pk %}">{{ link.child.full_name }}</a>
+                        <span class="muted">({{ link.get_relation_type_display }})</span>
+                        <form action="{% url 'remove-parentage' link.pk %}" method="post" class="inline-form">
+                            {% csrf_token %}
+                            <input type="hidden" name="redirect_to" value="{{ person.pk }}">
+                            <button type="submit" class="link-danger" onclick="return confirm('Retirer ce lien de filiation ?');">Retirer</button>
+                        </form>
+                    </li>
+                {% endfor %}
+            </ul>
         {% else %}<p class="muted">Aucun enfant renseigné.</p>{% endif %}
     </section>
 
     <section>
-        <h2>Conjoint(e)s</h2>
-        {% if partners %}
-            <ul>{% for p in partners %}<li><a href="{% url 'person-detail' p.pk %}">{{ p.full_name }}</a></li>{% endfor %}</ul>
+        <div class="section-header">
+            <h2>Conjoint(e)s</h2>
+            <a href="{% url 'add-partner' person.pk %}" class="btn btn-small">+ Ajouter un·e conjoint·e</a>
+        </div>
+        {% if unions %}
+            <ul class="relative-list">
+                {% for union in unions %}
+                    <li>
+                        {% if union.person1 == person %}
+                            <a href="{% url 'person-detail' union.person2.pk %}">{{ union.person2.full_name }}</a>
+                        {% else %}
+                            <a href="{% url 'person-detail' union.person1.pk %}">{{ union.person1.full_name }}</a>
+                        {% endif %}
+                        <span class="muted">({{ union.get_union_type_display }}{% if union.start_date %}, depuis {{ union.start_date }}{% endif %})</span>
+                        <form action="{% url 'remove-union' union.pk %}" method="post" class="inline-form">
+                            {% csrf_token %}
+                            <input type="hidden" name="redirect_to" value="{{ person.pk }}">
+                            <button type="submit" class="link-danger" onclick="return confirm('Retirer cette union ?');">Retirer</button>
+                        </form>
+                    </li>
+                {% endfor %}
+            </ul>
         {% else %}<p class="muted">Aucune union renseignée.</p>{% endif %}
     </section>
 {% endblock %}

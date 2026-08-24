@@ -3,6 +3,17 @@
     --accent: #4a6fa5;
     --border: #d9d9d9;
     --muted: #6b6b6b;
+    --card-bg: #fff;
+    --tree-line: #b7b7b7;
+    --danger: #b3413c;
+    --male: #4a6fa5;
+    --female: #b5568a;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --card-bg: #2a2a2a;
+    }
 }
 
 * { box-sizing: border-box; }
@@ -109,4 +120,171 @@ button, .login-form button {
     border: none;
     border-radius: 4px;
     cursor: pointer;
+}
+
+/* --- Layout élargi pour la page arbre --- */
+.container-wide {
+    max-width: 100%;
+    width: 100%;
+}
+
+/* --- Boutons --- */
+.btn {
+    display: inline-block;
+    padding: 0.45rem 0.9rem;
+    border-radius: 4px;
+    text-decoration: none;
+    font-size: 0.9rem;
+    border: 1px solid transparent;
+    cursor: pointer;
+}
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-secondary { background: transparent; color: inherit; border-color: var(--border); }
+.btn-danger { background: var(--danger); color: #fff; }
+.btn-small { padding: 0.2rem 0.6rem; font-size: 0.8rem; background: transparent; border-color: var(--border); color: inherit; }
+.action-bar { display: flex; gap: 0.5rem; margin: 1rem 0; flex-wrap: wrap; }
+
+.link-danger {
+    background: none;
+    border: none;
+    color: var(--danger);
+    text-decoration: underline;
+    cursor: pointer;
+    font: inherit;
+    padding: 0;
+}
+
+/* --- Formulaires --- */
+.stacked-form p { display: flex; flex-direction: column; gap: 0.25rem; margin-bottom: 0.75rem; }
+.stacked-form input, .stacked-form select, .stacked-form textarea {
+    padding: 0.4rem 0.6rem;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    font: inherit;
+    background: var(--card-bg);
+    color: inherit;
+}
+.relative-form-section {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+}
+.warning {
+    background: #fff4e5;
+    border: 1px solid #e0a030;
+    border-radius: 4px;
+    padding: 0.75rem 1rem;
+}
+
+/* --- Fiche personne : sections avec bouton d'ajout --- */
+.section-header { display: flex; justify-content: space-between; align-items: center; }
+.relative-list { list-style: none; padding: 0; }
+.relative-list li {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.4rem 0;
+    border-bottom: 1px solid var(--border);
+}
+.relative-list .inline-form { margin-left: auto; }
+
+/* --- Pedigree chart (façon Geneanet) --- */
+.pedigree-wrapper {
+    overflow-x: auto;
+    padding: 1.5rem 0;
+}
+.pedigree-chart {
+    display: inline-flex;
+    min-width: 100%;
+}
+.pedigree-node {
+    display: flex;
+    align-items: center;
+}
+.pedigree-card, .pedigree-unknown {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-width: 150px;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--card-bg);
+    text-decoration: none;
+    color: inherit;
+    font-size: 0.85rem;
+    white-space: nowrap;
+    position: relative;
+    z-index: 1;
+}
+.pedigree-card:hover { border-color: var(--accent); }
+.pedigree-card.sex-m { border-left: 4px solid var(--male); }
+.pedigree-card.sex-f { border-left: 4px solid var(--female); }
+.pedigree-card.sex-o { border-left: 4px solid var(--muted); }
+.pedigree-unknown {
+    color: var(--muted);
+    font-style: italic;
+    border-style: dashed;
+}
+.pedigree-name { font-weight: 600; }
+.pedigree-dates { font-size: 0.75rem; color: var(--muted); }
+
+.pedigree-parents {
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    margin-left: 2.5rem;
+}
+/* trait horizontal reliant la carte de l'enfant au tronc vertical */
+.pedigree-parents::before {
+    content: "";
+    position: absolute;
+    left: -2.5rem;
+    width: 1.25rem;
+    top: 50%;
+    border-top: 2px solid var(--tree-line);
+}
+.pedigree-parent {
+    position: relative;
+    padding: 0.75rem 0;
+}
+/* trait horizontal reliant le tronc à la carte de ce parent */
+.pedigree-parent::before {
+    content: "";
+    position: absolute;
+    left: -1.25rem;
+    width: 1.25rem;
+    top: 50%;
+    border-top: 2px solid var(--tree-line);
+}
+/* moitié de tronc vertical : du milieu de la ligne vers le bord partagé avec l'autre parent */
+.pedigree-parent:first-child::after {
+    content: "";
+    position: absolute;
+    left: -1.25rem;
+    top: 50%;
+    bottom: 0;
+    border-left: 2px solid var(--tree-line);
+}
+.pedigree-parent:last-child::after {
+    content: "";
+    position: absolute;
+    left: -1.25rem;
+    top: 0;
+    bottom: 50%;
+    border-left: 2px solid var(--tree-line);
+}
+
+/* --- Personne d'ancrage : conjoint(e)s + enfants sous l'arbre --- */
+.anchor-family {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+}
+.anchor-partners {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
 }

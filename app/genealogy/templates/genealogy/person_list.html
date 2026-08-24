@@ -3,7 +3,10 @@
 {% block title %}Personnes — Geneam{% endblock %}
 
 {% block content %}
-    <h1>Arbre généalogique</h1>
+    <div class="section-header">
+        <h1>Arbre généalogique</h1>
+        <a href="{% url 'person-add' %}" class="btn btn-primary">+ Ajouter une personne</a>
+    </div>
 
     <form method="get" class="search-form">
         <input type="text" name="q" value="{{ query }}" placeholder="Rechercher un nom ou prénom...">
@@ -16,6 +19,7 @@
                 <li>
                     <a href="{% url 'person-detail' person.pk %}">{{ person.full_name }}</a>
                     {% if person.birth_date %}<span class="muted">({{ person.birth_date|date:"Y" }}{% if person.death_date %} – {{ person.death_date|date:"Y" }}{% endif %})</span>{% endif %}
+                    <a href="{% url 'person-tree' person.pk %}" class="btn btn-small">Arbre</a>
                 </li>
             {% endfor %}
         </ul>
