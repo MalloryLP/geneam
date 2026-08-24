@@ -5,6 +5,7 @@ from . import views
 urlpatterns = [
     path("", views.PersonListView.as_view(), name="person-list"),
     path("personne/ajouter/", views.PersonCreateView.as_view(), name="person-add"),
+    path("personne/importer-gedcom/", views.gedcom_import_view, name="gedcom-import"),
     path("personne/<int:pk>/", views.PersonDetailView.as_view(), name="person-detail"),
     path("personne/<int:pk>/modifier/", views.PersonUpdateView.as_view(), name="person-edit"),
     path("personne/<int:pk>/supprimer/", views.PersonDeleteView.as_view(), name="person-delete"),

@@ -1,4 +1,5 @@
 from django import forms
+from django.core.exceptions import ValidationError
 
 from .models import Parentage, Person, Union
 
@@ -91,3 +92,29 @@ class NewPartnerForm(PersonForm):
     union_type = forms.ChoiceField(label="Type d'union", choices=Union.UnionType.choices)
     start_date = forms.DateField(label="Date de début", required=False, widget=DATE_WIDGET)
     end_date = forms.DateField(label="Date de fin", required=False, widget=DATE_WIDGET)
+
+
+class GedcomImportForm(forms.Form):
+    gedcom_file = forms.FileField(label="Fichier GEDCOM (.ged)")
+    confirm = forms.BooleanField(
+        label="Je comprends que cet import ajoute de nouvelles personnes sans fusionner avec celles déjà en base",
+        required=False,
+    )
+
+    def __init__(self, *args, existing_person_count=0, **kwargs):
+        self.existing_person_count = existing_person_count
+        super().__init__(*args, **kwargs)
+        if not existing_person_count:
+            del self.fields["confirm"]
+
+    def clean_gedcom_file(self):
+        gedcom_file = self.cleaned_data["gedcom_file"]
+        if not gedcom_file.name.lower().endswith(".ged"):
+            raise ValidationError("Le fichier doit avoir l'extension .ged")
+        return gedcom_file
+
+    def clean_confirm(self):
+        confirm = self.cleaned_data.get("confirm")
+        if self.existing_person_count and not confirm:
+            raise ValidationError("Coche la case pour confirmer l'import.")
+        return confirm

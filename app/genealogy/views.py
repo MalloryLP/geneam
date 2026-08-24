@@ -10,11 +10,13 @@ from .forms import (
     ExistingChildForm,
     ExistingParentForm,
     ExistingPartnerForm,
+    GedcomImportForm,
     NewChildForm,
     NewParentForm,
     NewPartnerForm,
     PersonForm,
 )
+from .gedcom_import import GedcomImportError, import_gedcom
 from .models import Parentage, Person, Union
 
 ANCESTOR_TREE_DEPTH = 4
@@ -285,3 +287,30 @@ def remove_union(request, pk):
     link.delete()
     messages.success(request, "Union retirée.")
     return redirect("person-detail", pk=redirect_pk)
+
+
+def gedcom_import_view(request):
+    existing_person_count = Person.objects.count()
+
+    if request.method == "POST":
+        form = GedcomImportForm(request.POST, request.FILES, existing_person_count=existing_person_count)
+        if form.is_valid():
+            try:
+                summary = import_gedcom(form.cleaned_data["gedcom_file"])
+            except GedcomImportError as exc:
+                messages.error(request, f"Le fichier n'a pas pu être importé : {exc}")
+            else:
+                messages.success(
+                    request,
+                    f"Import terminé : {summary.persons} personne(s), "
+                    f"{summary.parentages} filiation(s), {summary.unions} union(s) créée(s).",
+                )
+                return redirect("person-list")
+    else:
+        form = GedcomImportForm(existing_person_count=existing_person_count)
+
+    return render(
+        request,
+        "genealogy/gedcom_import.html",
+        {"form": form, "existing_person_count": existing_person_count},
+    )
