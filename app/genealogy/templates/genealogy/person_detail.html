@@ -1,0 +1,44 @@
+{% extends "genealogy/base.html" %}
+
+{% block title %}{{ person.full_name }} — Geneam{% endblock %}
+
+{% block content %}
+    <p><a href="{% url 'person-list' %}">&larr; Retour à la liste</a></p>
+
+    <h1>{{ person.full_name }}</h1>
+    <p class="muted">{{ person.get_sex_display }}</p>
+
+    <section>
+        <h2>État civil</h2>
+        <ul>
+            {% if person.birth_date or person.birth_place %}
+                <li>Née/Né le {{ person.birth_date|default:"?" }}{% if person.birth_place %} à {{ person.birth_place }}{% endif %}</li>
+            {% endif %}
+            {% if person.death_date or person.death_place %}
+                <li>Décédée/Décédé le {{ person.death_date|default:"?" }}{% if person.death_place %} à {{ person.death_place }}{% endif %}</li>
+            {% endif %}
+        </ul>
+        {% if person.notes %}<p>{{ person.notes|linebreaks }}</p>{% endif %}
+    </section>
+
+    <section>
+        <h2>Parents</h2>
+        {% if parents %}
+            <ul>{% for p in parents %}<li><a href="{% url 'person-detail' p.pk %}">{{ p.full_name }}</a></li>{% endfor %}</ul>
+        {% else %}<p class="muted">Aucun parent renseigné.</p>{% endif %}
+    </section>
+
+    <section>
+        <h2>Enfants</h2>
+        {% if children %}
+            <ul>{% for c in children %}<li><a href="{% url 'person-detail' c.pk %}">{{ c.full_name }}</a></li>{% endfor %}</ul>
+        {% else %}<p class="muted">Aucun enfant renseigné.</p>{% endif %}
+    </section>
+
+    <section>
+        <h2>Conjoint(e)s</h2>
+        {% if partners %}
+            <ul>{% for p in partners %}<li><a href="{% url 'person-detail' p.pk %}">{{ p.full_name }}</a></li>{% endfor %}</ul>
+        {% else %}<p class="muted">Aucune union renseignée.</p>{% endif %}
+    </section>
+{% endblock %}

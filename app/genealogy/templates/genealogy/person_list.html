@@ -1,0 +1,37 @@
+{% extends "genealogy/base.html" %}
+
+{% block title %}Personnes — Geneam{% endblock %}
+
+{% block content %}
+    <h1>Arbre généalogique</h1>
+
+    <form method="get" class="search-form">
+        <input type="text" name="q" value="{{ query }}" placeholder="Rechercher un nom ou prénom...">
+        <button type="submit">Rechercher</button>
+    </form>
+
+    {% if persons %}
+        <ul class="person-list">
+            {% for person in persons %}
+                <li>
+                    <a href="{% url 'person-detail' person.pk %}">{{ person.full_name }}</a>
+                    {% if person.birth_date %}<span class="muted">({{ person.birth_date|date:"Y" }}{% if person.death_date %} – {{ person.death_date|date:"Y" }}{% endif %})</span>{% endif %}
+                </li>
+            {% endfor %}
+        </ul>
+
+        {% if is_paginated %}
+            <div class="pagination">
+                {% if page_obj.has_previous %}
+                    <a href="?page={{ page_obj.previous_page_number }}{% if query %}&q={{ query }}{% endif %}">« Précédent</a>
+                {% endif %}
+                <span>Page {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}{% if query %}&q={{ query }}{% endif %}">Suivant »</a>
+                {% endif %}
+            </div>
+        {% endif %}
+    {% else %}
+        <p>Aucune personne enregistrée pour l'instant. Ajoutez-en depuis l'<a href="{% url 'admin:index' %}">interface d'administration</a>.</p>
+    {% endif %}
+{% endblock %}

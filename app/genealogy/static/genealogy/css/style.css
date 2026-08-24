@@ -1,0 +1,112 @@
+:root {
+    color-scheme: light dark;
+    --accent: #4a6fa5;
+    --border: #d9d9d9;
+    --muted: #6b6b6b;
+}
+
+* { box-sizing: border-box; }
+
+body {
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    margin: 0;
+    line-height: 1.5;
+}
+
+.site-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.site-header .brand {
+    font-weight: 700;
+    font-size: 1.25rem;
+    text-decoration: none;
+    color: var(--accent);
+}
+
+.site-header nav {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.inline-form {
+    display: inline;
+}
+
+.inline-form button {
+    background: none;
+    border: none;
+    color: inherit;
+    text-decoration: underline;
+    cursor: pointer;
+    font: inherit;
+    padding: 0;
+}
+
+.container {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 1.5rem;
+}
+
+.message {
+    background: #eef4ff;
+    border: 1px solid var(--accent);
+    border-radius: 4px;
+    padding: 0.5rem 1rem;
+    margin-bottom: 1rem;
+}
+
+.search-form {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.search-form input {
+    flex: 1;
+    padding: 0.4rem 0.6rem;
+}
+
+.person-list {
+    list-style: none;
+    padding: 0;
+}
+
+.person-list li {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.muted {
+    color: var(--muted);
+    font-size: 0.9em;
+}
+
+.pagination {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    margin-top: 1rem;
+}
+
+.login-form .field {
+    margin-bottom: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+button, .login-form button {
+    padding: 0.5rem 1rem;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
