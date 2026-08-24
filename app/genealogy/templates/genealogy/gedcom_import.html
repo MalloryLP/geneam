@@ -1,27 +1,32 @@
 {% extends "genealogy/base.html" %}
+{% load genealogy_extras %}
 
 {% block title %}Importer un GEDCOM — Geneam{% endblock %}
 
 {% block content %}
-    <h1>Importer un arbre GEDCOM</h1>
-    <p>
-        Exporte ton arbre depuis Geneanet au format GEDCOM (<code>.ged</code>) puis dépose le
-        fichier ici.
-    </p>
-
-    {% if existing_person_count %}
-        <p class="warning">
-            La base contient déjà {{ existing_person_count }} personne{{ existing_person_count|pluralize }}.
-            Cet import <strong>ajoute</strong> de nouvelles personnes, il ne fusionne pas avec
-            celles déjà enregistrées : si le fichier recouvre des personnes déjà présentes, elles
-            seront dupliquées.
+    <h1>{% icon "import" %} Importer un arbre GEDCOM</h1>
+    <div class="card">
+        <p>
+            Exporte ton arbre depuis Geneanet au format GEDCOM (<code>.ged</code>) puis dépose le
+            fichier ici.
         </p>
-    {% endif %}
 
-    <form method="post" enctype="multipart/form-data" class="stacked-form">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit" class="btn btn-primary">Importer</button>
-        <a href="{% url 'person-list' %}" class="btn btn-secondary">Annuler</a>
-    </form>
+        {% if existing_person_count %}
+            <p class="warning">
+                La base contient déjà {{ existing_person_count }} personne{{ existing_person_count|pluralize }}.
+                Cet import <strong>ajoute</strong> de nouvelles personnes, il ne fusionne pas avec
+                celles déjà enregistrées : si le fichier recouvre des personnes déjà présentes, elles
+                seront dupliquées.
+            </p>
+        {% endif %}
+
+        <form method="post" enctype="multipart/form-data" class="stacked-form">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <div class="action-bar">
+                <button type="submit" class="btn btn-primary">{% icon "import" %} Importer</button>
+                <a href="{% url 'person-list' %}" class="btn btn-secondary">Annuler</a>
+            </div>
+        </form>
+    </div>
 {% endblock %}

@@ -1,4 +1,5 @@
 {% extends "genealogy/base.html" %}
+{% load genealogy_extras %}
 
 {% block title %}Personnes — Geneam{% endblock %}
 
@@ -6,23 +7,26 @@
     <div class="section-header">
         <h1>Arbre généalogique</h1>
         <div class="action-bar">
-            <a href="{% url 'person-add' %}" class="btn btn-primary">+ Ajouter une personne</a>
-            <a href="{% url 'gedcom-import' %}" class="btn btn-secondary">Importer un GEDCOM</a>
+            <a href="{% url 'person-add' %}" class="btn btn-primary">{% icon "add" %} Ajouter une personne</a>
+            <a href="{% url 'gedcom-import' %}" class="btn btn-secondary">{% icon "import" %} Importer un GEDCOM</a>
         </div>
     </div>
 
     <form method="get" class="search-form">
         <input type="text" name="q" value="{{ query }}" placeholder="Rechercher un nom ou prénom...">
-        <button type="submit">Rechercher</button>
+        <button type="submit" class="btn btn-primary">Rechercher</button>
     </form>
 
     {% if persons %}
         <ul class="person-list">
             {% for person in persons %}
                 <li>
-                    <a href="{% url 'person-detail' person.pk %}">{{ person.full_name }}</a>
-                    {% if person.birth_date %}<span class="muted">({{ person.birth_date|date:"Y" }}{% if person.death_date %} – {{ person.death_date|date:"Y" }}{% endif %})</span>{% endif %}
-                    <a href="{% url 'person-tree' person.pk %}" class="btn btn-small">Arbre</a>
+                    <span class="avatar avatar-sm avatar-sex-{{ person.sex|lower }}">{{ person.first_name|slice:":1" }}{{ person.last_name|slice:":1" }}</span>
+                    <div class="person-meta">
+                        <a href="{% url 'person-detail' person.pk %}" class="person-name">{{ person.full_name }}</a>
+                        <span class="muted">{% person_years person %}</span>
+                    </div>
+                    <a href="{% url 'person-tree' person.pk %}" class="btn btn-small">{% icon "tree" %} Arbre</a>
                 </li>
             {% endfor %}
         </ul>
@@ -39,6 +43,10 @@
             </div>
         {% endif %}
     {% else %}
-        <p>Aucune personne enregistrée pour l'instant. Ajoutez-en depuis l'<a href="{% url 'admin:index' %}">interface d'administration</a>.</p>
+        <p>Aucune personne enregistrée pour l'instant. Ajoutez-en avec le bouton ci-dessus ou depuis l'<a href="{% url 'admin:index' %}">interface d'administration</a>.</p>
     {% endif %}
+{% endblock %}
+
+{% block fab %}
+    <a href="{% url 'person-add' %}" class="fab" aria-label="Ajouter une personne">{% icon "add" %}</a>
 {% endblock %}

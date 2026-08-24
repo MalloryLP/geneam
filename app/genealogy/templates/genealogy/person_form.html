@@ -1,13 +1,18 @@
 {% extends "genealogy/base.html" %}
+{% load genealogy_extras %}
 
 {% block title %}{{ title }} — Geneam{% endblock %}
 
 {% block content %}
     <h1>{{ title }}</h1>
-    <form method="post" class="stacked-form">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit" class="btn btn-primary">Enregistrer</button>
-        <a href="{% if form.instance.pk %}{% url 'person-detail' form.instance.pk %}{% else %}{% url 'person-list' %}{% endif %}" class="btn btn-secondary">Annuler</a>
-    </form>
+    <div class="card">
+        <form method="post" class="stacked-form">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <div class="action-bar">
+                <button type="submit" class="btn btn-primary">{% icon "edit" %} Enregistrer</button>
+                <a href="{% if form.instance.pk %}{% url 'person-detail' form.instance.pk %}{% else %}{% url 'person-list' %}{% endif %}" class="btn btn-secondary">Annuler</a>
+            </div>
+        </form>
+    </div>
 {% endblock %}

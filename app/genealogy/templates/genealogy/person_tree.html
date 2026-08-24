@@ -5,8 +5,8 @@
 {% block container_class %}container-wide{% endblock %}
 
 {% block content %}
-    <p><a href="{% url 'person-detail' person.pk %}">&larr; Retour à la fiche de {{ person.full_name }}</a></p>
-    <h1>Arbre de {{ person.full_name }}</h1>
+    <p><a href="{% url 'person-detail' person.pk %}">{% icon "chevron" "flip" %} Retour à la fiche de {{ person.full_name }}</a></p>
+    <h1>{% icon "tree" %} Arbre de {{ person.full_name }}</h1>
 
     <div class="pedigree-wrapper">
         <div class="pedigree-chart">
@@ -32,6 +32,7 @@
                 <ul class="relative-list">
                     {% for child in children %}
                         <li>
+                            {% icon "person" %}
                             <a href="{% url 'person-tree' child.pk %}">{{ child.full_name }}</a>
                             <span class="muted">{% person_years child %}</span>
                         </li>

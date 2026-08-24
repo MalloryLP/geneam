@@ -1,4 +1,4 @@
-{% load static %}<!DOCTYPE html>
+{% load static genealogy_extras %}<!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
@@ -7,17 +7,56 @@
     <link rel="stylesheet" href="{% static 'genealogy/css/style.css' %}">
 </head>
 <body>
-    <header class="site-header">
-        <a class="brand" href="{% url 'person-list' %}">Geneam</a>
-        <nav>
-            <a href="{% url 'admin:index' %}">Admin</a>
-        </nav>
-    </header>
-    <main class="container {% block container_class %}{% endblock %}">
-        {% for message in messages %}
-            <div class="message">{{ message }}</div>
-        {% endfor %}
-        {% block content %}{% endblock %}
-    </main>
+    <input type="checkbox" id="sidebar-toggle" class="sidebar-toggle-checkbox" hidden>
+
+    <div class="app-shell">
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <span class="sidebar-brand-icon">{% icon "tree" %}</span>
+                <span>Geneam</span>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="{% url 'home' %}" class="{% if request.resolver_match.url_name == 'home' %}active{% endif %}">
+                    {% icon "home" %}<span>Accueil</span>
+                </a>
+                <a href="{% url 'person-list' %}" class="{% if request.resolver_match.url_name == 'person-list' %}active{% endif %}">
+                    {% icon "person" %}<span>Toutes les personnes</span>
+                </a>
+                <a href="{% url 'person-add' %}" class="{% if request.resolver_match.url_name == 'person-add' %}active{% endif %}">
+                    {% icon "add" %}<span>Ajouter une personne</span>
+                </a>
+                <a href="{% url 'gedcom-import' %}" class="{% if request.resolver_match.url_name == 'gedcom-import' %}active{% endif %}">
+                    {% icon "import" %}<span>Importer un GEDCOM</span>
+                </a>
+                <a href="{% url 'admin:index' %}">
+                    {% icon "admin" %}<span>Administration</span>
+                </a>
+            </nav>
+        </aside>
+
+        <label for="sidebar-toggle" class="sidebar-overlay" aria-hidden="true"></label>
+
+        <div class="app-main">
+            <header class="topbar">
+                <label for="sidebar-toggle" class="icon-button sidebar-toggle-btn" aria-label="Menu">
+                    {% icon "menu" %}
+                </label>
+                <a class="topbar-title" href="{% url 'home' %}">{% block topbar_title %}Geneam{% endblock %}</a>
+                <form method="get" action="{% url 'person-list' %}" class="topbar-search" role="search">
+                    {% icon "search" %}
+                    <input type="text" name="q" placeholder="Rechercher une personne...">
+                </form>
+            </header>
+
+            <main class="content {% block container_class %}{% endblock %}">
+                {% for message in messages %}
+                    <div class="message">{{ message }}</div>
+                {% endfor %}
+                {% block content %}{% endblock %}
+            </main>
+        </div>
+    </div>
+
+    {% block fab %}{% endblock %}
 </body>
 </html>

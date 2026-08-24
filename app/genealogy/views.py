@@ -128,6 +128,29 @@ class PersonTreeView(DetailView):
         return context
 
 
+class HomeView(PersonTreeView):
+    """Page d'accueil : l'arbre de la personne de référence, ou la liste si aucune n'est définie."""
+
+    def get(self, request, *args, **kwargs):
+        home_person = Person.objects.filter(is_home_person=True).first()
+        if home_person is None:
+            return PersonListView.as_view()(request)
+        self.object = home_person
+        context = self.get_context_data(object=self.object)
+        return self.render_to_response(context)
+
+
+@require_POST
+def set_home_person(request, pk):
+    person = get_object_or_404(Person, pk=pk)
+    with transaction.atomic():
+        Person.objects.filter(is_home_person=True).update(is_home_person=False)
+        person.is_home_person = True
+        person.save(update_fields=["is_home_person"])
+    messages.success(request, f"{person.full_name} est maintenant la personne de référence de l'accueil.")
+    return redirect("person-detail", pk=person.pk)
+
+
 def add_parent(request, pk):
     child = get_object_or_404(Person, pk=pk)
     existing_form = ExistingParentForm(child=child, prefix="existing")

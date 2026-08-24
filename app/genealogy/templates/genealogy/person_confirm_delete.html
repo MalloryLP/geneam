@@ -1,22 +1,25 @@
 {% extends "genealogy/base.html" %}
+{% load genealogy_extras %}
 
 {% block title %}Supprimer {{ object.full_name }} — Geneam{% endblock %}
 
 {% block content %}
     <h1>Supprimer {{ object.full_name }} ?</h1>
-    <p>Cette action est irréversible.</p>
-    {% if parentage_count or union_count %}
-        <p class="warning">
-            Cela supprimera aussi
-            {% if parentage_count %}{{ parentage_count }} lien{{ parentage_count|pluralize }} de filiation{% endif %}
-            {% if parentage_count and union_count %} et {% endif %}
-            {% if union_count %}{{ union_count }} union{{ union_count|pluralize }}{% endif %}
-            lié{{ parentage_count|add:union_count|pluralize }} à cette personne (les autres personnes concernées ne sont pas supprimées).
-        </p>
-    {% endif %}
-    <form method="post">
-        {% csrf_token %}
-        <button type="submit" class="btn btn-danger">Confirmer la suppression</button>
-        <a href="{% url 'person-detail' object.pk %}" class="btn btn-secondary">Annuler</a>
-    </form>
+    <div class="card">
+        <p>Cette action est irréversible.</p>
+        {% if parentage_count or union_count %}
+            <p class="warning">
+                Cela supprimera aussi
+                {% if parentage_count %}{{ parentage_count }} lien{{ parentage_count|pluralize }} de filiation{% endif %}
+                {% if parentage_count and union_count %} et {% endif %}
+                {% if union_count %}{{ union_count }} union{{ union_count|pluralize }}{% endif %}
+                lié{{ parentage_count|add:union_count|pluralize }} à cette personne (les autres personnes concernées ne sont pas supprimées).
+            </p>
+        {% endif %}
+        <form method="post" class="action-bar">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger">{% icon "trash" %} Confirmer la suppression</button>
+            <a href="{% url 'person-detail' object.pk %}" class="btn btn-secondary">Annuler</a>
+        </form>
+    </div>
 {% endblock %}

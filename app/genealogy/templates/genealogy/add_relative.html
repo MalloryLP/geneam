@@ -1,9 +1,10 @@
 {% extends "genealogy/base.html" %}
+{% load genealogy_extras %}
 
 {% block title %}{{ title }} — Geneam{% endblock %}
 
 {% block content %}
-    <p><a href="{% url 'person-detail' target.pk %}">&larr; Retour à {{ target.full_name }}</a></p>
+    <p><a href="{% url 'person-detail' target.pk %}">{% icon "chevron" "flip" %} Retour à {{ target.full_name }}</a></p>
     <h1>{{ title }}</h1>
 
     <section class="relative-form-section">
@@ -12,7 +13,7 @@
             {% csrf_token %}
             <input type="hidden" name="mode" value="existing">
             {{ existing_form.as_p }}
-            <button type="submit" class="btn btn-primary">Lier</button>
+            <button type="submit" class="btn btn-primary">{% icon "union" %} Lier</button>
         </form>
     </section>
 
@@ -22,7 +23,7 @@
             {% csrf_token %}
             <input type="hidden" name="mode" value="new">
             {{ new_form.as_p }}
-            <button type="submit" class="btn btn-primary">Créer et lier</button>
+            <button type="submit" class="btn btn-primary">{% icon "add" %} Créer et lier</button>
         </form>
     </section>
 {% endblock %}

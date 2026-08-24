@@ -19,6 +19,12 @@ class Person(models.Model):
 
     notes = models.TextField("notes", blank=True)
 
+    is_home_person = models.BooleanField(
+        "personne de référence",
+        default=False,
+        help_text="Personne dont l'arbre s'affiche sur la page d'accueil (une seule à la fois).",
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -26,6 +32,13 @@ class Person(models.Model):
         verbose_name = "personne"
         verbose_name_plural = "personnes"
         ordering = ["last_name", "first_name"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["is_home_person"],
+                condition=models.Q(is_home_person=True),
+                name="unique_home_person",
+            )
+        ]
 
     def __str__(self):
         return self.full_name
