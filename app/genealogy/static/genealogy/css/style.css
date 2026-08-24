@@ -105,12 +105,15 @@ a { color: var(--primary); }
     z-index: 5;
 }
 .topbar-title {
+    display: none; /* la sidebar affiche déjà la marque "Geneam" en permanence sur grand écran */
     font-weight: 600;
     text-decoration: none;
     color: inherit;
     font-size: 1.05rem;
 }
-.sidebar-toggle-btn { display: none; cursor: pointer; }
+/* Sélecteur composé (deux classes) pour battre .icon-button dans le cascade
+   quel que soit l'ordre des règles dans ce fichier. */
+.icon-button.sidebar-toggle-btn { display: none; cursor: pointer; }
 
 .topbar-search {
     margin-left: auto;
@@ -157,9 +160,10 @@ a { color: var(--primary); }
         background: rgba(0, 0, 0, 0.4);
         z-index: 15;
     }
-    .sidebar-toggle-btn { display: inline-flex; }
+    .icon-button.sidebar-toggle-btn { display: inline-flex; }
     .topbar { padding: 0.6rem 0.85rem; gap: 0.6rem; }
-    .topbar-title { display: none; }
+    /* Sidebar repliée par défaut sur mobile : la barre du haut redevient la seule marque visible */
+    .topbar-title { display: inline-block; }
     .topbar-search { width: auto; flex: 1; }
     .content { padding: 1rem; }
     .person-header { flex-direction: column; }
