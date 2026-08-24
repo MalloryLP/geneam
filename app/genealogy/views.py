@@ -1,11 +1,10 @@
-from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Q
 from django.views.generic import DetailView, ListView
 
 from .models import Person
 
 
-class PersonListView(LoginRequiredMixin, ListView):
+class PersonListView(ListView):
     model = Person
     template_name = "genealogy/person_list.html"
     context_object_name = "persons"
@@ -26,7 +25,7 @@ class PersonListView(LoginRequiredMixin, ListView):
         return context
 
 
-class PersonDetailView(LoginRequiredMixin, DetailView):
+class PersonDetailView(DetailView):
     model = Person
     template_name = "genealogy/person_detail.html"
     context_object_name = "person"

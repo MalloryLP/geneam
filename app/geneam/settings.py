@@ -102,10 +102,6 @@ STORAGES = {
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-LOGIN_URL = "login"
-LOGIN_REDIRECT_URL = "person-list"
-LOGOUT_REDIRECT_URL = "login"
-
 # Behind Nginx Proxy Manager: trust the X-Forwarded-Proto header so Django
 # knows a request was HTTPS even though gunicorn itself only speaks HTTP.
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")

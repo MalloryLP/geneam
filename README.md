@@ -14,10 +14,11 @@ Application web de généalogie personnelle, conteneurisée avec Docker.
 - `Parentage` : lien parent → enfant (biologique / adoptif / famille d'accueil)
 - `Union` : lien entre deux personnes (mariage, PACS, union libre...)
 
-Gestion CRUD complète disponible immédiatement via l'admin Django (`/admin/`).
-Une vue publique minimale liste les personnes et affiche une fiche par
-personne (parents / enfants / conjoint·e·s), protégée par connexion
-(`LoginRequiredMixin`).
+Gestion CRUD complète disponible immédiatement via l'admin Django (`/admin/`,
+protégé par l'authentification intégrée de Django). Une vue publique minimale
+liste les personnes et affiche une fiche par personne (parents / enfants /
+conjoint·e·s) — accessible sans connexion, l'application étant réservée à un
+usage strictement personnel sur le réseau local.
 
 ## Démarrage
 
