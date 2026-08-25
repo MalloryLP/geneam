@@ -21,35 +21,37 @@
         <div class="pedigree-wrapper">
             <div class="pedigree-tree">
                 <ul>
-                    {% include "genealogy/_ancestors_node.html" with node=ancestors %}
+                    <li>
+                        {% comment %}
+                            La personne d'ancrage porte, en plus de ses ascendants (comme
+                            n'importe quel nœud), sa propre descendance directe — intégrée
+                            au même graphique connecté plutôt qu'en liste séparée en bas de
+                            page, pour qu'elle fasse vraiment partie "de l'arbre". Un seul
+                            niveau (pas de petits-enfants) : au-delà, on clique un enfant
+                            pour que l'arbre reparte de lui.
+                        {% endcomment %}
+                        {% if children_by_union %}
+                            <ul class="pedigree-descendants">
+                                {% for group in children_by_union %}
+                                    {% for child in group.children %}
+                                        <li>
+                                            {% if children_grouped %}
+                                                <div class="ped-union-caption">
+                                                    avec {% if group.co_parent %}{{ group.co_parent.full_name }}{% else %}? {% endif %}
+                                                </div>
+                                            {% endif %}
+                                            {% include "genealogy/_ped_card.html" with person=child.person recenter_target_pk=child.recenter_target_pk has_descendants=child.has_descendants has_union=child.has_union %}
+                                        </li>
+                                    {% endfor %}
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
+
+                        {% include "genealogy/_ancestors_node.html" with node=ancestors skip_li=True %}
+                    </li>
                 </ul>
             </div>
         </div>
-
-        {% if partners or children_by_union %}
-            <div class="anchor-family">
-                {% if partners %}
-                    <h2>Conjoint(e)s</h2>
-                    <div class="anchor-partners">
-                        {% for partner in partners %}
-                            {% include "genealogy/_ped_card.html" with person=partner.person recenter_target_pk=partner.recenter_target_pk has_descendants=partner.has_descendants %}
-                        {% endfor %}
-                    </div>
-                {% endif %}
-
-                {% for group in children_by_union %}
-                    <h2>
-                        Enfants
-                        {% if children_grouped %}{% if group.co_parent %}avec {{ group.co_parent.full_name }}{% else %}(autre parent non renseigné){% endif %}{% endif %}
-                    </h2>
-                    <div class="anchor-partners">
-                        {% for child in group.children %}
-                            {% include "genealogy/_ped_card.html" with person=child.person recenter_target_pk=child.recenter_target_pk has_descendants=child.has_descendants %}
-                        {% endfor %}
-                    </div>
-                {% endfor %}
-            </div>
-        {% endif %}
     </div>
 
     <aside class="person-panel" id="person-panel" hidden aria-live="polite"></aside>

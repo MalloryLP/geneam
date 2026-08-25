@@ -92,6 +92,10 @@ def build_ancestors(person, depth=ANCESTOR_TREE_DEPTH):
             # L'arbre continue au-delà de ce qui est affiché : cliquer la carte recentre dessus.
             "has_hidden_ancestors": last_generation and bool(parents),
             "has_descendants": current.pk in children_of,
+            # Badge "+" façon Geneanet : cette personne a au moins une union connue
+            # (même celle déjà affichée comme père/mère juste à côté), invitant à
+            # explorer son couple/sa descendance.
+            "has_union": bool(partners_of.get(current.pk)),
             "recenter_target_pk": recenter_target_pk(current, child_towards_anchor),
             # Remariage : les autres conjoint(e)s de cette personne, hors celui/celle
             # qui a donné l'enfant par lequel on est remonté jusqu'ici. Pas de lien de
@@ -104,6 +108,7 @@ def build_ancestors(person, depth=ANCESTOR_TREE_DEPTH):
                     "person": p,
                     "recenter_target_pk": recenter_target_pk(p, None),
                     "has_descendants": p.pk in children_of,
+                    "has_union": True,  # elle est justement affichée ici pour son union avec current
                 }
                 for p in other_spouses
             ],
@@ -205,12 +210,10 @@ class PersonTreeView(DetailView):
         context = super().get_context_data(**kwargs)
         context["ancestors"] = build_ancestors(self.object)
         context["generations"] = ANCESTOR_TREE_DEPTH
-
-        partners = []
-        for p in self.object.partners():
-            target_pk, has_descendants = _card_target(p)
-            partners.append({"person": p, "recenter_target_pk": target_pk, "has_descendants": has_descendants})
-        context["partners"] = partners
+        # Les conjoint(e)s de la personne d'ancrage sont déjà affiché(e)s à côté
+        # d'elle dans le pedigree (`other_spouses` du nœud racine, cf.
+        # build_ancestors — sans co_parent à exclure, il·elle·s y figurent
+        # toutes/tous) : pas besoin d'une section "Conjoint(e)s" séparée.
 
         # Enfants groupés par union (par l'autre parent) dès qu'il y en a plus
         # d'une, comme sur Geneanet — sinon liste simple, pas de sous-titre inutile.
@@ -230,7 +233,12 @@ class PersonTreeView(DetailView):
             cards = []
             for child in kids:
                 target_pk, has_descendants = _card_target(child)
-                cards.append({"person": child, "recenter_target_pk": target_pk, "has_descendants": has_descendants})
+                cards.append({
+                    "person": child,
+                    "recenter_target_pk": target_pk,
+                    "has_descendants": has_descendants,
+                    "has_union": child.unions().exists(),
+                })
             children_by_union.append({"co_parent": co_parent, "children": cards})
         context["children_by_union"] = children_by_union
         context["children_grouped"] = len(children_by_union) > 1

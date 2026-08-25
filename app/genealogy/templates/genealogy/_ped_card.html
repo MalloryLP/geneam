@@ -13,6 +13,9 @@
     <a href="{% url 'person-tree' recenter_target_pk %}"
        class="ped-card sex-{{ person.sex|lower }}"
        title="Centrer l'arbre sur {{ person.full_name }}">
+        {% if has_union %}
+            <span class="ped-union" title="{{ person.full_name }} a une union enregistrée">+</span>
+        {% endif %}
         <span class="ped-name">{{ person.full_name }}</span>
         <span class="ped-dates">{% person_years person %}</span>
         {% if has_descendants %}

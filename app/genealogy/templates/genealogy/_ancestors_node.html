@@ -1,18 +1,24 @@
 {% load genealogy_extras %}
-<li>
+{% if not skip_li %}<li>{% endif %}
     <div class="ped-cell-row">
-        {% comment %}
-            Autre(s) conjoint(e)s de cette personne (remariage) : celui/celle qui a
-            donné l'enfant de la lignée directe est déjà la carte "père"/"mère"
-            voisine à ce niveau, pas répété ici. Même style que la carte principale,
-            juste pas de branche d'ancêtres au-delà : on ne connaît pas leur propre
-            lignée dans ce pedigree centré sur la personne d'ancrage.
-        {% endcomment %}
-        {% for spouse in node.other_spouses %}
-            {% include "genealogy/_ped_card.html" with person=spouse.person recenter_target_pk=spouse.recenter_target_pk has_descendants=spouse.has_descendants %}
-        {% endfor %}
+        {% if node.other_spouses %}
+            {% comment %}
+                Autre(s) conjoint(e)s de cette personne (remariage) : celui/celle qui
+                a donné l'enfant de la lignée directe est déjà la carte "père"/"mère"
+                voisine à ce niveau, pas répété ici. Même style que la carte
+                principale, juste pas de branche d'ancêtres au-delà : on ne connaît
+                pas leur propre lignée dans ce pedigree centré sur la personne
+                d'ancrage. Hors du flux normal (voir CSS) pour ne pas décaler le
+                tronc du connecteur, qui doit rester centré sur la carte principale.
+            {% endcomment %}
+            <div class="ped-extra-spouses">
+                {% for spouse in node.other_spouses %}
+                    {% include "genealogy/_ped_card.html" with person=spouse.person recenter_target_pk=spouse.recenter_target_pk has_descendants=spouse.has_descendants has_union=True %}
+                {% endfor %}
+            </div>
+        {% endif %}
 
-        {% include "genealogy/_ped_card.html" with person=node.person recenter_target_pk=node.recenter_target_pk has_descendants=node.has_descendants has_hidden_ancestors=node.has_hidden_ancestors %}
+        {% include "genealogy/_ped_card.html" with person=node.person recenter_target_pk=node.recenter_target_pk has_descendants=node.has_descendants has_hidden_ancestors=node.has_hidden_ancestors has_union=node.has_union %}
     </div>
 
     {% if node.father or node.mother or node.father_slot or node.mother_slot %}
@@ -43,4 +49,4 @@
             {% endif %}
         </ul>
     {% endif %}
-</li>
+{% if not skip_li %}</li>{% endif %}

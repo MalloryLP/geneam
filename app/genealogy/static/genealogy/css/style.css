@@ -468,13 +468,25 @@ a { color: var(--primary); }
     text-align: left;
 }
 
-/* Regroupe la carte d'une personne avec ses autres conjoint(e)s (remariages)
-   sur une même ligne, sans perturber la géométrie des connecteurs qui reste
-   attachée au <li> englobant. */
+/* La largeur de .ped-cell-row (utilisée par les connecteurs du <li> englobant,
+   voir plus haut) doit rester celle de la SEULE carte principale — sinon le
+   tronc se centre sur tout le groupe [conjoint(e)s + personne] et semble à
+   tort relier ces conjoint(e)s à l'union affichée juste à côté. Les autres
+   conjoint(e)s (remariages) sont donc positionnées en absolu, hors du flux :
+   visibles, cliquables, mais sans influencer cette géométrie. */
 .ped-cell-row {
+    position: relative;
+    display: inline-block;
+}
+.ped-extra-spouses {
+    position: absolute;
+    top: 0;
+    right: 100%;
+    margin-right: 4px;
     display: inline-flex;
     align-items: center;
     gap: 4px;
+    white-space: nowrap;
 }
 
 /* Le retournement est porté par la cellule et non par la carte, pour que la
@@ -527,6 +539,25 @@ a { color: var(--primary); }
 .ped-card.sex-m { border-left: 4px solid var(--male); }
 .ped-card.sex-f { border-left: 4px solid var(--female); }
 .ped-card.sex-o { border-left: 4px solid var(--muted); }
+/* Badge "+" façon Geneanet : signale une union enregistrée pour cette personne
+   (même déjà affichée juste à côté), sans rapport avec les ancêtres cachés. */
+.ped-union {
+    position: absolute;
+    top: -7px;
+    left: -7px;
+    width: 16px;
+    height: 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    background: var(--dot-green);
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 700;
+    line-height: 1;
+    z-index: 2;
+}
 .ped-name {
     font-weight: 600;
     line-height: 1.25;
@@ -660,3 +691,68 @@ a { color: var(--primary); }
 
 /* Chronologie insérée dans une carte de la fiche pleine page */
 .timeline-inline .timeline-event { padding-left: 0; padding-right: 0; }
+
+/* ============ Descendance de la personne d'ancrage, intégrée au graphique ============
+   Contrairement aux ascendants (exactement 2 items qui convergent), un nombre
+   arbitraire d'enfants doit ici diverger depuis un seul point : chaque <li>
+   porte une portion du tronc horizontal (pleine largeur, sauf aux extrémités
+   où seule la moitié intérieure est tracée) plutôt que la répartition en deux
+   moitiés utilisée pour les ascendants. */
+ul.pedigree-descendants {
+    /* display:flex (bloc) hérité de la règle générique .pedigree-tree ul :
+       en inline-flex ça se retrouvait sur la même "ligne" que .ped-cell-row
+       (lui aussi inline) au lieu de s'empiler dessus. */
+    justify-content: center;
+    position: relative;
+    list-style: none;
+    margin: 0;
+    padding: 0 0 44px; /* 22px tronc horizontal + 22px trait vers la carte de l'ancre */
+}
+.pedigree-descendants li {
+    position: relative;
+    padding: 0 6px;
+    list-style: none;
+    text-align: center;
+}
+/* trait vertical de chaque carte enfant vers le tronc horizontal commun */
+.pedigree-descendants li::after {
+    content: "";
+    position: absolute;
+    bottom: -22px;
+    left: 50%;
+    width: 0;
+    height: 22px;
+    border-left: 2px solid var(--tree-line);
+}
+/* tronc horizontal : pleine largeur par défaut, demi-largeur aux extrémités */
+.pedigree-descendants li::before {
+    content: "";
+    position: absolute;
+    bottom: -22px;
+    left: 0;
+    right: 0;
+    border-bottom: 2px solid var(--tree-line);
+}
+.pedigree-descendants li:first-child::before { left: 50%; border-radius: 0 0 0 6px; }
+.pedigree-descendants li:last-child::before { right: 50%; border-radius: 0 0 6px 0; }
+.pedigree-descendants li:only-child::before,
+.pedigree-descendants li:only-child::after { display: none; }
+/* trait vertical central : du tronc horizontal jusqu'à la carte de l'ancre qui suit */
+.pedigree-descendants::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    width: 0;
+    height: 22px;
+    border-left: 2px solid var(--tree-line);
+}
+
+/* Légende "avec X" au-dessus d'un enfant, quand plusieurs unions se distinguent */
+.ped-union-caption {
+    transform: scaleY(-1); /* même contre-retournement que .ped-cell */
+    font-size: 0.68rem;
+    color: var(--muted);
+    margin-bottom: 2px;
+    white-space: nowrap;
+}
