@@ -1,4 +1,3 @@
-import datetime
 from collections import defaultdict
 
 from django.contrib import messages
@@ -51,23 +50,7 @@ def build_ancestors(person, depth=ANCESTOR_TREE_DEPTH):
         partners_of[union.person1_id].append(union.person2)
         partners_of[union.person2_id].append(union.person1)
 
-    def recenter_target_pk(subject, child_towards_anchor):
-        """Sur quelle personne cliquer une carte doit-il recentrer l'arbre ?
-
-        Sans enfant : sur la personne elle-même. Avec enfant : sur la
-        génération du dessous (plus utile pour voir sa descendance) — de
-        préférence l'enfant déjà visible dans l'arbre courant (celui par
-        lequel on est remonté jusqu'à cette personne), sinon l'aîné connu.
-        """
-        if child_towards_anchor is not None:
-            return child_towards_anchor.pk
-        kids = children_of.get(subject.pk)
-        if not kids:
-            return subject.pk
-        eldest = min(kids, key=lambda c: (c.birth_date is None, c.birth_date or datetime.date.max))
-        return eldest.pk
-
-    def node(current, remaining, co_parent=None, child_towards_anchor=None):
+    def node(current, remaining, co_parent=None):
         parents = parents_of.get(current.pk, [])
         father = next((p for p in parents if p.sex == Person.Sex.MALE), None)
         mother = next((p for p in parents if p.sex == Person.Sex.FEMALE), None)
@@ -83,9 +66,9 @@ def build_ancestors(person, depth=ANCESTOR_TREE_DEPTH):
         return {
             "person": current,
             "father": None if last_generation or father is None
-            else node(father, remaining - 1, mother, current),
+            else node(father, remaining - 1, mother),
             "mother": None if last_generation or mother is None
-            else node(mother, remaining - 1, father, current),
+            else node(mother, remaining - 1, father),
             # Emplacements "+" pour compléter l'arbre là où il s'arrête, comme sur Geneanet.
             "father_slot": not last_generation and father is None,
             "mother_slot": not last_generation and mother is None,
@@ -96,17 +79,15 @@ def build_ancestors(person, depth=ANCESTOR_TREE_DEPTH):
             # (même celle déjà affichée comme père/mère juste à côté), invitant à
             # explorer son couple/sa descendance.
             "has_union": bool(partners_of.get(current.pk)),
-            "recenter_target_pk": recenter_target_pk(current, child_towards_anchor),
             # Remariage : les autres conjoint(e)s de cette personne, hors celui/celle
-            # qui a donné l'enfant par lequel on est remonté jusqu'ici. Pas de lien de
-            # sang avec la personne d'ancrage, donc pas de "génération du dessous" à
-            # privilégier au clic : au mieux leur propre aîné. Même traitement visuel
-            # que la carte principale (façon Geneanet : aucune distinction de style
-            # entre les conjoint(e)s d'une personne).
+            # qui a donné l'enfant par lequel on est remonté jusqu'ici. Pas de branche
+            # d'ancêtres au-delà : on ne connaît pas leur propre lignée dans ce
+            # pedigree centré sur la personne d'ancrage. Même traitement visuel que
+            # la carte principale (façon Geneanet : aucune distinction de style entre
+            # les conjoint(e)s d'une personne).
             "other_spouses": [
                 {
                     "person": p,
-                    "recenter_target_pk": recenter_target_pk(p, None),
                     "has_descendants": p.pk in children_of,
                     "has_union": True,  # elle est justement affichée ici pour son union avec current
                 }
@@ -190,17 +171,6 @@ class PersonDeleteView(DeleteView):
         return context
 
 
-def _card_target(person):
-    """(pk sur lequel recentrer, a-t-elle de la descendance) pour une carte hors
-    pedigree — même règle que dans l'arbre : direction la génération du dessous
-    (son aîné connu) si elle a des enfants, sinon elle-même."""
-    kids = list(person.children())
-    if not kids:
-        return person.pk, False
-    eldest = min(kids, key=lambda c: (c.birth_date is None, c.birth_date or datetime.date.max))
-    return eldest.pk, True
-
-
 class PersonTreeView(DetailView):
     model = Person
     template_name = "genealogy/person_tree.html"
@@ -232,11 +202,9 @@ class PersonTreeView(DetailView):
         for co_parent, kids in groups.items():
             cards = []
             for child in kids:
-                target_pk, has_descendants = _card_target(child)
                 cards.append({
                     "person": child,
-                    "recenter_target_pk": target_pk,
-                    "has_descendants": has_descendants,
+                    "has_descendants": bool(child.children_links.exists()),
                     "has_union": child.unions().exists(),
                 })
             children_by_union.append({"co_parent": co_parent, "children": cards})

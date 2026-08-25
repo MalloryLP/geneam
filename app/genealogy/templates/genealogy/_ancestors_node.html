@@ -13,18 +13,23 @@
             {% endcomment %}
             <div class="ped-extra-spouses">
                 {% for spouse in node.other_spouses %}
-                    {% include "genealogy/_ped_card.html" with person=spouse.person recenter_target_pk=spouse.recenter_target_pk has_descendants=spouse.has_descendants has_union=True %}
+                    {% include "genealogy/_ped_card.html" with person=spouse.person has_descendants=spouse.has_descendants has_union=True %}
                 {% endfor %}
             </div>
         {% endif %}
 
-        {% include "genealogy/_ped_card.html" with person=node.person recenter_target_pk=node.recenter_target_pk has_descendants=node.has_descendants has_hidden_ancestors=node.has_hidden_ancestors has_union=node.has_union %}
+        {% include "genealogy/_ped_card.html" with person=node.person has_descendants=node.has_descendants has_hidden_ancestors=node.has_hidden_ancestors has_union=node.has_union %}
     </div>
 
     {% if node.father or node.mother or node.father_slot or node.mother_slot %}
         <ul>
             {% if node.father %}
-                {% include "genealogy/_ancestors_node.html" with node=node.father %}
+                {% comment %}
+                    skip_li=False explicite : un "include" hérite tout le contexte par
+                    défaut, sinon le skip_li=True de l'appel racine (person_tree.html)
+                    se propagerait à cet appel récursif et supprimerait son <li>.
+                {% endcomment %}
+                {% include "genealogy/_ancestors_node.html" with node=node.father skip_li=False %}
             {% else %}
                 <li>
                     <div class="ped-cell">
@@ -36,7 +41,7 @@
                 </li>
             {% endif %}
             {% if node.mother %}
-                {% include "genealogy/_ancestors_node.html" with node=node.mother %}
+                {% include "genealogy/_ancestors_node.html" with node=node.mother skip_li=False %}
             {% else %}
                 <li>
                     <div class="ped-cell">

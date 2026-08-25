@@ -4,13 +4,14 @@
     de la lignée directe et pour ses éventuel(le)s autre(s) conjoint(e)s, comme
     sur Geneanet (aucune distinction de style entre les deux).
 
-    Cliquer la carte recentre l'arbre (sur la personne elle-même si elle n'a pas
-    d'enfant, sinon sur la génération du dessous — c'est `recenter_target_pk`,
-    déjà résolu côté vue, qui porte ce choix). La petite icône en coin ouvre la
-    fiche détaillée (événements de vie) dans le panneau latéral, sans y renoncer.
+    Cliquer la carte recentre l'arbre sur la personne elle-même — si elle a des
+    enfants, ils apparaissent alors directement connectés sous elle (voir
+    PersonTreeView/pedigree-descendants), donc plus besoin de deviner "quel
+    enfant" cibler. La petite icône en coin ouvre la fiche détaillée
+    (événements de vie) dans le panneau latéral, sans renoncer à cette info.
 {% endcomment %}
 <div class="ped-cell">
-    <a href="{% url 'person-tree' recenter_target_pk %}"
+    <a href="{% url 'person-tree' person.pk %}"
        class="ped-card sex-{{ person.sex|lower }}"
        title="Centrer l'arbre sur {{ person.full_name }}">
         {% if has_union %}

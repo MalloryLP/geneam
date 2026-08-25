@@ -40,7 +40,7 @@
                                                     avec {% if group.co_parent %}{{ group.co_parent.full_name }}{% else %}? {% endif %}
                                                 </div>
                                             {% endif %}
-                                            {% include "genealogy/_ped_card.html" with person=child.person recenter_target_pk=child.recenter_target_pk has_descendants=child.has_descendants has_union=child.has_union %}
+                                            {% include "genealogy/_ped_card.html" with person=child.person has_descendants=child.has_descendants has_union=child.has_union %}
                                         </li>
                                     {% endfor %}
                                 {% endfor %}
