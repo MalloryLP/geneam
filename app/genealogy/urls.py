@@ -11,6 +11,7 @@ urlpatterns = [
     path("personne/<int:pk>/modifier/", views.PersonUpdateView.as_view(), name="person-edit"),
     path("personne/<int:pk>/supprimer/", views.PersonDeleteView.as_view(), name="person-delete"),
     path("personne/<int:pk>/arbre/", views.PersonTreeView.as_view(), name="person-tree"),
+    path("personne/<int:pk>/panneau/", views.person_panel, name="person-panel"),
     path("personne/<int:pk>/definir-reference/", views.set_home_person, name="set-home-person"),
     path("personne/<int:pk>/ajouter-parent/", views.add_parent, name="add-parent"),
     path("personne/<int:pk>/ajouter-enfant/", views.add_child, name="add-child"),

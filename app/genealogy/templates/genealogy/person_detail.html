@@ -47,6 +47,32 @@
                 {% endif %}
             </section>
 
+            <section id="evenements" class="card">
+                <h2>Événements</h2>
+                <hr class="section-divider">
+                {% if timeline %}
+                    <div class="timeline timeline-inline">
+                        {% for event in timeline %}
+                            <div class="timeline-event">
+                                <div class="timeline-event-head">
+                                    <span class="timeline-title">{{ event.title }}</span>
+                                    {% if event.date_text %}<span class="timeline-date">{{ event.date_text }}</span>{% endif %}
+                                </div>
+                                {% if event.related_person %}
+                                    <p class="timeline-detail">avec <a href="{% url 'person-detail' event.related_person.pk %}">{{ event.related_person.full_name }}</a></p>
+                                {% endif %}
+                                {% if event.place %}<p class="timeline-place">{{ event.place }}</p>{% endif %}
+                                {% if event.description %}
+                                    <p class="timeline-detail">{{ event.description }}</p>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="muted">Aucun événement enregistré.</p>
+                {% endif %}
+            </section>
+
             <section id="parents" class="card">
                 <div class="section-header">
                     <h2>Parents</h2>
@@ -126,6 +152,7 @@
 
         <aside class="person-toc">
             <a href="#etat-civil">État civil</a>
+            <a href="#evenements">Événements</a>
             <a href="#parents">Parents</a>
             <a href="#enfants">Enfants</a>
             <a href="#conjoints">Conjoint(e)s</a>

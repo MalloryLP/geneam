@@ -459,17 +459,50 @@ a { color: var(--primary); }
     color: inherit;
     font-size: 0.8rem;
     text-align: left;
-    transform: scaleY(-1); /* annule le retournement du conteneur */
+}
+
+/* Le retournement est porté par la cellule et non par la carte, pour que la
+   carte et son bouton "recentrer" (deux liens frères, jamais imbriqués) se
+   redressent ensemble. */
+.ped-cell {
+    position: relative;
+    display: inline-block;
+    transform: scaleY(-1);
 }
 .ped-card:hover { border-color: var(--primary); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12); }
 /* Personne d'ancrage de l'arbre : mise en avant, comme la carte verte de Geneanet */
-.pedigree-tree > ul > li > .ped-card {
+.pedigree-tree > ul > li > .ped-cell > .ped-card {
     background: var(--anchor-bg);
     border-color: var(--anchor-bg);
     color: #fff;
 }
-.pedigree-tree > ul > li > .ped-card .ped-dates { color: rgba(255, 255, 255, 0.75); }
-.pedigree-tree > ul > li > .ped-card .ped-dot { box-shadow: 0 0 0 2px var(--anchor-bg); }
+.pedigree-tree > ul > li > .ped-cell > .ped-card .ped-dates { color: rgba(255, 255, 255, 0.75); }
+.pedigree-tree > ul > li > .ped-cell > .ped-card .ped-dot { box-shadow: 0 0 0 2px var(--anchor-bg); }
+/* Carte dont la fiche est ouverte dans le panneau */
+.ped-card.is-selected {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px var(--primary);
+}
+
+/* Bouton "recentrer l'arbre ici", superposé au coin de la carte */
+.ped-recenter {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    display: inline-flex;
+    padding: 2px;
+    border-radius: 6px;
+    color: var(--muted);
+    opacity: 0;
+    transition: opacity 0.15s ease;
+}
+.ped-recenter .icon { width: 13px; height: 13px; }
+.ped-cell:hover .ped-recenter,
+.ped-recenter:focus { opacity: 1; }
+.ped-recenter:hover { color: var(--primary); background: var(--chip-bg); }
+/* Ancêtres au-delà de la dernière génération affichée : toujours visible,
+   c'est l'indice qu'il reste quelque chose à explorer de ce côté. */
+.ped-recenter-more { opacity: 1; color: var(--primary); }
 .ped-card.sex-m { border-left: 4px solid var(--male); }
 .ped-card.sex-f { border-left: 4px solid var(--female); }
 .ped-card.sex-o { border-left: 4px solid var(--muted); }
@@ -508,16 +541,6 @@ a { color: var(--primary); }
     background: var(--dot-green);
     box-shadow: 0 0 0 2px var(--card-bg);
 }
-/* Chevron : des ancêtres existent au-delà de la dernière génération affichée */
-.ped-more {
-    position: absolute;
-    right: 4px;
-    top: 4px;
-    display: inline-flex;
-    color: var(--primary);
-    transform: rotate(-90deg);
-}
-.ped-more .icon { width: 14px; height: 14px; }
 
 /* ============ Conjoint(e)s et enfants de la personne d'ancrage ============ */
 .anchor-family {
@@ -531,5 +554,84 @@ a { color: var(--primary); }
     gap: 0.75rem;
     flex-wrap: wrap;
 }
-/* Hors de l'arbre retourné, les cartes ne doivent pas être retournées */
-.anchor-partners .ped-card { transform: none; }
+
+/* ============ Arbre + panneau latéral « fiche individu » ============ */
+.tree-layout { display: flex; gap: 1.25rem; align-items: flex-start; }
+.tree-main { flex: 1; min-width: 0; }
+
+.person-panel {
+    width: 340px;
+    flex-shrink: 0;
+    max-height: calc(100vh - 6rem);
+    overflow-y: auto;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    position: sticky;
+    top: 5rem;
+}
+.person-panel[hidden] { display: none; }
+
+.panel-head {
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+    padding: 1rem;
+    border-bottom: 1px solid var(--border);
+}
+.panel-identity { flex: 1; min-width: 0; }
+.panel-identity h2 { margin: 0; font-size: 1.05rem; overflow-wrap: break-word; }
+.panel-identity p { margin: 0.15rem 0 0; }
+.panel-occupation { font-style: italic; color: var(--muted); font-size: 0.85rem; }
+.panel-close { flex-shrink: 0; cursor: pointer; background: none; border: none; }
+.avatar-md { width: 56px; height: 56px; font-size: 1.15rem; }
+
+.panel-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border);
+}
+.panel-empty { padding: 1rem; }
+
+/* Chronologie des événements de vie */
+.timeline-event {
+    padding: 0.7rem 1rem;
+    border-bottom: 1px solid var(--border);
+}
+.timeline-event:last-child { border-bottom: none; }
+.timeline-event-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 0.75rem;
+}
+.timeline-title { font-weight: 600; color: var(--anchor-bg); }
+.timeline-date { font-weight: 600; font-size: 0.85rem; text-align: right; }
+.timeline-place,
+.timeline-detail {
+    margin: 0.2rem 0 0;
+    font-size: 0.82rem;
+    color: var(--muted);
+}
+
+@media (prefers-color-scheme: dark) {
+    .timeline-title { color: #6cc79a; }
+}
+
+/* Sous 1100px le panneau passe en superposition plein écran plutôt qu'en colonne */
+@media (max-width: 1100px) {
+    .person-panel {
+        position: fixed;
+        inset: 0 0 0 auto;
+        width: min(380px, 100%);
+        max-height: 100vh;
+        border-radius: 0;
+        z-index: 30;
+        box-shadow: -4px 0 20px rgba(0, 0, 0, 0.25);
+    }
+}
+
+/* Chronologie insérée dans une carte de la fiche pleine page */
+.timeline-inline .timeline-event { padding-left: 0; padding-right: 0; }

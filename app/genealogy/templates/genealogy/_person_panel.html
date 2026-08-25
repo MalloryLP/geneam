@@ -1,0 +1,36 @@
+{% load genealogy_extras %}
+<div class="panel-head">
+    <span class="avatar avatar-md avatar-sex-{{ person.sex|lower }}">{{ person.first_name|slice:":1" }}{{ person.last_name|slice:":1" }}</span>
+    <div class="panel-identity">
+        <h2>{{ person.full_name }}</h2>
+        {% if person.occupation %}<p class="panel-occupation">{{ person.occupation }}</p>{% endif %}
+        <p class="muted">{% person_years person %}</p>
+    </div>
+    <button type="button" class="icon-button panel-close" data-panel-close aria-label="Fermer">{% icon "close" %}</button>
+</div>
+
+<div class="panel-actions">
+    <a href="{% url 'person-tree' person.pk %}" class="btn btn-small">{% icon "tree" %} Centrer l'arbre ici</a>
+    <a href="{% url 'person-detail' person.pk %}" class="btn btn-small">{% icon "person" %} Fiche complète</a>
+    <a href="{% url 'person-edit' person.pk %}" class="btn btn-small">{% icon "edit" %} Modifier</a>
+</div>
+
+<div class="timeline">
+    {% for event in timeline %}
+        <div class="timeline-event">
+            <div class="timeline-event-head">
+                <span class="timeline-title">{{ event.title }}</span>
+                {% if event.date_text %}<span class="timeline-date">{{ event.date_text }}</span>{% endif %}
+            </div>
+            {% if event.related_person %}
+                <p class="timeline-detail">avec <a href="{% url 'person-tree' event.related_person.pk %}">{{ event.related_person.full_name }}</a></p>
+            {% endif %}
+            {% if event.place %}<p class="timeline-place">{{ event.place }}</p>{% endif %}
+            {% if event.description %}
+                <p class="timeline-detail">{{ event.description }}</p>
+            {% endif %}
+        </div>
+    {% empty %}
+        <p class="muted panel-empty">Aucun événement enregistré pour cette personne.</p>
+    {% endfor %}
+</div>

@@ -29,6 +29,10 @@ _ICONS = {
     "union": '<path d="M8 12l-2 2a3 3 0 0 0 4 4l2-2"/><path d="M16 12l2-2a3 3 0 0 0-4-4l-2 2"/>'
     '<path d="M9 15l6-6"/>',
     "chevron": '<polyline points="9 6 15 12 9 18"/>',
+    # Flèche d'expansion : recentrer l'arbre sur cette personne (équivalent de
+    # la petite flèche bleue des cartes Geneanet).
+    "recenter": '<path d="M14 4h6v6"/><path d="M20 4l-7 7"/>'
+    '<path d="M10 20H4v-6"/><path d="M4 20l7-7"/>',
 }
 
 

@@ -99,6 +99,7 @@ class PersonDetailView(DetailView):
         context["parentages_as_child"] = Parentage.objects.filter(child=person).select_related("parent")
         context["parentages_as_parent"] = Parentage.objects.filter(parent=person).select_related("child")
         context["unions"] = person.unions().select_related("person1", "person2")
+        context["timeline"] = person.timeline()
         return context
 
 
@@ -167,6 +168,16 @@ class HomeView(PersonTreeView):
         self.object = home_person
         context = self.get_context_data(object=self.object)
         return self.render_to_response(context)
+
+
+def person_panel(request, pk):
+    """Fragment HTML de la fiche latérale, chargé en fetch() depuis l'arbre."""
+    person = get_object_or_404(Person, pk=pk)
+    return render(
+        request,
+        "genealogy/_person_panel.html",
+        {"person": person, "timeline": person.timeline()},
+    )
 
 
 @require_POST
