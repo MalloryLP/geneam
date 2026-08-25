@@ -1,0 +1,28 @@
+{% load genealogy_extras %}
+{% comment %}
+    Carte personne réutilisable du pedigree : même traitement pour la personne
+    de la lignée directe et pour ses éventuel(le)s autre(s) conjoint(e)s, comme
+    sur Geneanet (aucune distinction de style entre les deux).
+
+    Cliquer la carte recentre l'arbre (sur la personne elle-même si elle n'a pas
+    d'enfant, sinon sur la génération du dessous — c'est `recenter_target_pk`,
+    déjà résolu côté vue, qui porte ce choix). La petite icône en coin ouvre la
+    fiche détaillée (événements de vie) dans le panneau latéral, sans y renoncer.
+{% endcomment %}
+<div class="ped-cell">
+    <a href="{% url 'person-tree' recenter_target_pk %}"
+       class="ped-card sex-{{ person.sex|lower }}"
+       title="Centrer l'arbre sur {{ person.full_name }}">
+        <span class="ped-name">{{ person.full_name }}</span>
+        <span class="ped-dates">{% person_years person %}</span>
+        {% if has_descendants %}
+            <span class="ped-dot" title="A de la descendance"></span>
+        {% endif %}
+    </a>
+    <a href="{% url 'person-detail' person.pk %}"
+       data-panel-url="{% url 'person-panel' person.pk %}"
+       class="ped-info {% if has_hidden_ancestors %}ped-info-more{% endif %}"
+       title="{% if has_hidden_ancestors %}D'autres ancêtres existent — voir la fiche{% else %}Voir la fiche de {{ person.full_name }}{% endif %}">
+        {% icon "person" %}
+    </a>
+</div>

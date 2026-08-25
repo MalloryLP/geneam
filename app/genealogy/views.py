@@ -1,8 +1,9 @@
+import datetime
 from collections import defaultdict
 
 from django.contrib import messages
 from django.db import transaction
-from django.db.models import Count, Q
+from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
 from django.views.decorators.http import require_POST
@@ -37,10 +38,10 @@ def build_ancestors(person, depth=ANCESTOR_TREE_DEPTH):
         return None
 
     parents_of = defaultdict(list)
-    people_with_children = set()
-    for link in Parentage.objects.select_related("parent"):
+    children_of = defaultdict(list)
+    for link in Parentage.objects.select_related("parent", "child"):
         parents_of[link.child_id].append(link.parent)
-        people_with_children.add(link.parent_id)
+        children_of[link.parent_id].append(link.child)
 
     # Tous les conjoint(e)s de chaque personne, pour repérer les remariages :
     # quand un ancêtre a eu plusieurs unions, celle qui n'a pas produit l'enfant
@@ -50,7 +51,23 @@ def build_ancestors(person, depth=ANCESTOR_TREE_DEPTH):
         partners_of[union.person1_id].append(union.person2)
         partners_of[union.person2_id].append(union.person1)
 
-    def node(current, remaining, co_parent=None):
+    def recenter_target_pk(subject, child_towards_anchor):
+        """Sur quelle personne cliquer une carte doit-il recentrer l'arbre ?
+
+        Sans enfant : sur la personne elle-même. Avec enfant : sur la
+        génération du dessous (plus utile pour voir sa descendance) — de
+        préférence l'enfant déjà visible dans l'arbre courant (celui par
+        lequel on est remonté jusqu'à cette personne), sinon l'aîné connu.
+        """
+        if child_towards_anchor is not None:
+            return child_towards_anchor.pk
+        kids = children_of.get(subject.pk)
+        if not kids:
+            return subject.pk
+        eldest = min(kids, key=lambda c: (c.birth_date is None, c.birth_date or datetime.date.max))
+        return eldest.pk
+
+    def node(current, remaining, co_parent=None, child_towards_anchor=None):
         parents = parents_of.get(current.pk, [])
         father = next((p for p in parents if p.sex == Person.Sex.MALE), None)
         mother = next((p for p in parents if p.sex == Person.Sex.FEMALE), None)
@@ -62,19 +79,34 @@ def build_ancestors(person, depth=ANCESTOR_TREE_DEPTH):
 
         last_generation = remaining <= 1
         co_parent_pk = co_parent.pk if co_parent else None
+        other_spouses = [p for p in partners_of.get(current.pk, []) if p.pk != co_parent_pk]
         return {
             "person": current,
-            "father": None if last_generation or father is None else node(father, remaining - 1, mother),
-            "mother": None if last_generation or mother is None else node(mother, remaining - 1, father),
+            "father": None if last_generation or father is None
+            else node(father, remaining - 1, mother, current),
+            "mother": None if last_generation or mother is None
+            else node(mother, remaining - 1, father, current),
             # Emplacements "+" pour compléter l'arbre là où il s'arrête, comme sur Geneanet.
             "father_slot": not last_generation and father is None,
             "mother_slot": not last_generation and mother is None,
             # L'arbre continue au-delà de ce qui est affiché : cliquer la carte recentre dessus.
             "has_hidden_ancestors": last_generation and bool(parents),
-            "has_descendants": current.pk in people_with_children,
+            "has_descendants": current.pk in children_of,
+            "recenter_target_pk": recenter_target_pk(current, child_towards_anchor),
             # Remariage : les autres conjoint(e)s de cette personne, hors celui/celle
-            # qui a donné l'enfant par lequel on est remonté jusqu'ici.
-            "other_spouses": [p for p in partners_of.get(current.pk, []) if p.pk != co_parent_pk],
+            # qui a donné l'enfant par lequel on est remonté jusqu'ici. Pas de lien de
+            # sang avec la personne d'ancrage, donc pas de "génération du dessous" à
+            # privilégier au clic : au mieux leur propre aîné. Même traitement visuel
+            # que la carte principale (façon Geneanet : aucune distinction de style
+            # entre les conjoint(e)s d'une personne).
+            "other_spouses": [
+                {
+                    "person": p,
+                    "recenter_target_pk": recenter_target_pk(p, None),
+                    "has_descendants": p.pk in children_of,
+                }
+                for p in other_spouses
+            ],
         }
 
     return node(person, depth)
@@ -153,6 +185,17 @@ class PersonDeleteView(DeleteView):
         return context
 
 
+def _card_target(person):
+    """(pk sur lequel recentrer, a-t-elle de la descendance) pour une carte hors
+    pedigree — même règle que dans l'arbre : direction la génération du dessous
+    (son aîné connu) si elle a des enfants, sinon elle-même."""
+    kids = list(person.children())
+    if not kids:
+        return person.pk, False
+    eldest = min(kids, key=lambda c: (c.birth_date is None, c.birth_date or datetime.date.max))
+    return eldest.pk, True
+
+
 class PersonTreeView(DetailView):
     model = Person
     template_name = "genealogy/person_tree.html"
@@ -162,12 +205,35 @@ class PersonTreeView(DetailView):
         context = super().get_context_data(**kwargs)
         context["ancestors"] = build_ancestors(self.object)
         context["generations"] = ANCESTOR_TREE_DEPTH
-        context["partners"] = self.object.partners()
-        # Les descendants directs portent aussi le point vert quand ils ont eux-mêmes
-        # de la descendance, comme les cartes du pedigree.
-        context["children"] = self.object.children().annotate(
-            child_count=Count("children_links")
+
+        partners = []
+        for p in self.object.partners():
+            target_pk, has_descendants = _card_target(p)
+            partners.append({"person": p, "recenter_target_pk": target_pk, "has_descendants": has_descendants})
+        context["partners"] = partners
+
+        # Enfants groupés par union (par l'autre parent) dès qu'il y en a plus
+        # d'une, comme sur Geneanet — sinon liste simple, pas de sous-titre inutile.
+        children = list(self.object.children())
+        other_parent_links = (
+            Parentage.objects.filter(child__in=children)
+            .exclude(parent=self.object)
+            .select_related("parent")
         )
+        other_parent_by_child = {link.child_id: link.parent for link in other_parent_links}
+        groups = defaultdict(list)
+        for child in children:
+            groups[other_parent_by_child.get(child.pk)].append(child)
+
+        children_by_union = []
+        for co_parent, kids in groups.items():
+            cards = []
+            for child in kids:
+                target_pk, has_descendants = _card_target(child)
+                cards.append({"person": child, "recenter_target_pk": target_pk, "has_descendants": has_descendants})
+            children_by_union.append({"co_parent": co_parent, "children": cards})
+        context["children_by_union"] = children_by_union
+        context["children_grouped"] = len(children_by_union) > 1
         return context
 
 

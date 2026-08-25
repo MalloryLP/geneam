@@ -497,23 +497,16 @@ a { color: var(--primary); }
 .pedigree-tree > ul > li > .ped-cell-row > .ped-cell:last-child > .ped-card .ped-dates { color: rgba(255, 255, 255, 0.75); }
 .pedigree-tree > ul > li > .ped-cell-row > .ped-cell:last-child > .ped-card .ped-dot { box-shadow: 0 0 0 2px var(--anchor-bg); }
 
-/* Carte de remariage : conjoint(e) supplémentaire, non apparenté(e) par le sang
-   à la personne d'ancrage — présentation plus discrète, pas de branche au-dessus. */
-.ped-card-remarriage {
-    width: 128px;
-    min-height: 44px;
-    opacity: 0.85;
-    border-style: dashed;
-}
-.ped-card-remarriage:hover { opacity: 1; }
 /* Carte dont la fiche est ouverte dans le panneau */
 .ped-card.is-selected {
     border-color: var(--primary);
     box-shadow: 0 0 0 2px var(--primary);
 }
 
-/* Bouton "recentrer l'arbre ici", superposé au coin de la carte */
-.ped-recenter {
+/* Bouton "voir la fiche" (panneau latéral), superposé au coin de la carte.
+   Le clic sur la carte elle-même recentre désormais l'arbre — cette icône
+   reste le moyen d'accéder aux événements de vie sans quitter l'arbre. */
+.ped-info {
     position: absolute;
     top: 2px;
     right: 2px;
@@ -524,13 +517,13 @@ a { color: var(--primary); }
     opacity: 0;
     transition: opacity 0.15s ease;
 }
-.ped-recenter .icon { width: 13px; height: 13px; }
-.ped-cell:hover .ped-recenter,
-.ped-recenter:focus { opacity: 1; }
-.ped-recenter:hover { color: var(--primary); background: var(--chip-bg); }
+.ped-info .icon { width: 13px; height: 13px; }
+.ped-cell:hover .ped-info,
+.ped-info:focus { opacity: 1; }
+.ped-info:hover { color: var(--primary); background: var(--chip-bg); }
 /* Ancêtres au-delà de la dernière génération affichée : toujours visible,
    c'est l'indice qu'il reste quelque chose à explorer de ce côté. */
-.ped-recenter-more { opacity: 1; color: var(--primary); }
+.ped-info-more { opacity: 1; color: var(--primary); }
 .ped-card.sex-m { border-left: 4px solid var(--male); }
 .ped-card.sex-f { border-left: 4px solid var(--female); }
 .ped-card.sex-o { border-left: 4px solid var(--muted); }
@@ -582,6 +575,10 @@ a { color: var(--primary); }
     gap: 0.75rem;
     flex-wrap: wrap;
 }
+/* .ped-cell porte un contre-retournement pensé pour l'intérieur de
+   .pedigree-tree (lui-même retourné) ; hors de ce conteneur, comme ici, il
+   n'y a rien à contrer. */
+.anchor-partners .ped-cell { transform: none; }
 
 /* ============ Arbre + panneau latéral « fiche individu » ============ */
 .tree-layout { display: flex; gap: 1.25rem; align-items: flex-start; }

@@ -12,7 +12,7 @@
                 <h1>{% icon "tree" %} {{ person.full_name }}</h1>
                 <p class="muted">
                     Ascendance sur {{ generations }} générations — cliquer-glisser pour se déplacer,
-                    cliquer une carte ouvre sa fiche, la flèche {% icon "recenter" %} recentre l'arbre.
+                    cliquer une carte y recentre l'arbre, l'icône {% icon "person" %} ouvre sa fiche.
                 </p>
             </div>
             <a href="{% url 'person-detail' person.pk %}" class="btn btn-secondary">{% icon "person" %} Voir la fiche</a>
@@ -26,41 +26,28 @@
             </div>
         </div>
 
-        {% if partners or children %}
+        {% if partners or children_by_union %}
             <div class="anchor-family">
                 {% if partners %}
                     <h2>Conjoint(e)s</h2>
                     <div class="anchor-partners">
                         {% for partner in partners %}
-                            <a href="{% url 'person-detail' partner.pk %}"
-                               data-panel-url="{% url 'person-panel' partner.pk %}"
-                               class="ped-card sex-{{ partner.sex|lower }}">
-                                <span class="ped-name">⚭ {{ partner.full_name }}</span>
-                                <span class="ped-dates">{% person_years partner %}</span>
-                                {% if partner.children_links.exists %}
-                                    <span class="ped-dot" title="A de la descendance"></span>
-                                {% endif %}
-                            </a>
+                            {% include "genealogy/_ped_card.html" with person=partner.person recenter_target_pk=partner.recenter_target_pk has_descendants=partner.has_descendants %}
                         {% endfor %}
                     </div>
                 {% endif %}
 
-                {% if children %}
-                    <h2>Enfants</h2>
+                {% for group in children_by_union %}
+                    <h2>
+                        Enfants
+                        {% if children_grouped %}{% if group.co_parent %}avec {{ group.co_parent.full_name }}{% else %}(autre parent non renseigné){% endif %}{% endif %}
+                    </h2>
                     <div class="anchor-partners">
-                        {% for child in children %}
-                            <a href="{% url 'person-detail' child.pk %}"
-                               data-panel-url="{% url 'person-panel' child.pk %}"
-                               class="ped-card sex-{{ child.sex|lower }}">
-                                <span class="ped-name">{{ child.full_name }}</span>
-                                <span class="ped-dates">{% person_years child %}</span>
-                                {% if child.child_count %}
-                                    <span class="ped-dot" title="A de la descendance"></span>
-                                {% endif %}
-                            </a>
+                        {% for child in group.children %}
+                            {% include "genealogy/_ped_card.html" with person=child.person recenter_target_pk=child.recenter_target_pk has_descendants=child.has_descendants %}
                         {% endfor %}
                     </div>
-                {% endif %}
+                {% endfor %}
             </div>
         {% endif %}
     </div>
@@ -143,8 +130,8 @@
             return;
         }
 
-        var card = event.target.closest("[data-panel-url]");
-        if (!card) return;
+        var trigger = event.target.closest("[data-panel-url]");
+        if (!trigger) return;
         // Ctrl/⌘/molette : laisser le navigateur ouvrir la fiche dans un onglet.
         if (event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0) return;
 
@@ -152,11 +139,16 @@
         document.querySelectorAll(".ped-card.is-selected").forEach(function (el) {
             el.classList.remove("is-selected");
         });
-        card.classList.add("is-selected");
+        // L'icône qui ouvre le panneau est un petit bouton superposé au coin de
+        // la carte, pas la carte elle-même (qui, cliquée, recentre l'arbre) :
+        // c'est la carte voisine qu'on met en surbrillance.
+        var cell = trigger.closest(".ped-cell");
+        var card = cell ? cell.querySelector(".ped-card") : trigger;
+        if (card) card.classList.add("is-selected");
 
         panel.hidden = false;
         panel.innerHTML = '<p class="panel-empty muted">Chargement…</p>';
-        fetch(card.dataset.panelUrl, {headers: {"X-Requested-With": "fetch"}})
+        fetch(trigger.dataset.panelUrl, {headers: {"X-Requested-With": "fetch"}})
             .then(function (response) {
                 if (!response.ok) throw new Error(response.status);
                 return response.text();
@@ -165,7 +157,7 @@
             .catch(function () {
                 // En cas d'échec réseau, ne pas laisser un panneau vide : basculer
                 // sur la fiche pleine page, qui est la cible du lien.
-                window.location = card.getAttribute("href");
+                window.location = trigger.getAttribute("href");
             });
     });
 
