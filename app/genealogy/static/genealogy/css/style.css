@@ -375,9 +375,16 @@ a { color: var(--primary); }
 
 /* ============ Pedigree vertical (façon Geneanet) ============ */
 .pedigree-wrapper {
-    overflow-x: auto;
+    overflow: auto;
     padding: 1.5rem 0 0.5rem;
+    cursor: grab;
+    /* La molette/barre native reste fonctionnelle (scrollLeft/scrollTop) mais
+       cachée : le déplacement se fait en cliquant-glissant, comme une image. */
+    scrollbar-width: none;
+    -ms-overflow-style: none;
 }
+.pedigree-wrapper::-webkit-scrollbar { display: none; }
+.pedigree-wrapper.is-dragging { cursor: grabbing; user-select: none; }
 
 /* L'arbre est construit de haut en bas (racine = personne d'ancrage) puis
    retourné verticalement, pour que l'ancrage se retrouve en bas et les
@@ -461,6 +468,15 @@ a { color: var(--primary); }
     text-align: left;
 }
 
+/* Regroupe la carte d'une personne avec ses autres conjoint(e)s (remariages)
+   sur une même ligne, sans perturber la géométrie des connecteurs qui reste
+   attachée au <li> englobant. */
+.ped-cell-row {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
 /* Le retournement est porté par la cellule et non par la carte, pour que la
    carte et son bouton "recentrer" (deux liens frères, jamais imbriqués) se
    redressent ensemble. */
@@ -470,14 +486,26 @@ a { color: var(--primary); }
     transform: scaleY(-1);
 }
 .ped-card:hover { border-color: var(--primary); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12); }
-/* Personne d'ancrage de l'arbre : mise en avant, comme la carte verte de Geneanet */
-.pedigree-tree > ul > li > .ped-cell > .ped-card {
+/* Personne d'ancrage de l'arbre : mise en avant, comme la carte verte de Geneanet.
+   :last-child cible la carte principale : les éventuelles cartes de remariage
+   sont rendues avant elle dans .ped-cell-row. */
+.pedigree-tree > ul > li > .ped-cell-row > .ped-cell:last-child > .ped-card {
     background: var(--anchor-bg);
     border-color: var(--anchor-bg);
     color: #fff;
 }
-.pedigree-tree > ul > li > .ped-cell > .ped-card .ped-dates { color: rgba(255, 255, 255, 0.75); }
-.pedigree-tree > ul > li > .ped-cell > .ped-card .ped-dot { box-shadow: 0 0 0 2px var(--anchor-bg); }
+.pedigree-tree > ul > li > .ped-cell-row > .ped-cell:last-child > .ped-card .ped-dates { color: rgba(255, 255, 255, 0.75); }
+.pedigree-tree > ul > li > .ped-cell-row > .ped-cell:last-child > .ped-card .ped-dot { box-shadow: 0 0 0 2px var(--anchor-bg); }
+
+/* Carte de remariage : conjoint(e) supplémentaire, non apparenté(e) par le sang
+   à la personne d'ancrage — présentation plus discrète, pas de branche au-dessus. */
+.ped-card-remarriage {
+    width: 128px;
+    min-height: 44px;
+    opacity: 0.85;
+    border-style: dashed;
+}
+.ped-card-remarriage:hover { opacity: 1; }
 /* Carte dont la fiche est ouverte dans le panneau */
 .ped-card.is-selected {
     border-color: var(--primary);

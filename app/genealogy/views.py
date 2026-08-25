@@ -28,9 +28,10 @@ ANCESTOR_TREE_DEPTH = 5
 def build_ancestors(person, depth=ANCESTOR_TREE_DEPTH):
     """Pedigree ascendant récursif {person, father, mother} sur `depth` générations.
 
-    Toutes les filiations sont chargées en une seule requête puis l'arbre est
-    construit en mémoire : sur 5 générations le pedigree compte jusqu'à 31
-    nœuds, ce qui ferait autant de requêtes en interrogeant la base nœud à nœud.
+    Toutes les filiations et unions sont chargées en une seule requête chacune
+    puis l'arbre est construit en mémoire : sur 5 générations le pedigree
+    compte jusqu'à 31 nœuds, ce qui ferait autant de requêtes en interrogeant
+    la base nœud à nœud.
     """
     if person is None or depth <= 0:
         return None
@@ -41,7 +42,15 @@ def build_ancestors(person, depth=ANCESTOR_TREE_DEPTH):
         parents_of[link.child_id].append(link.parent)
         people_with_children.add(link.parent_id)
 
-    def node(current, remaining):
+    # Tous les conjoint(e)s de chaque personne, pour repérer les remariages :
+    # quand un ancêtre a eu plusieurs unions, celle qui n'a pas produit l'enfant
+    # de la lignée directe est quand même affichée à côté de lui.
+    partners_of = defaultdict(list)
+    for union in Union.objects.select_related("person1", "person2"):
+        partners_of[union.person1_id].append(union.person2)
+        partners_of[union.person2_id].append(union.person1)
+
+    def node(current, remaining, co_parent=None):
         parents = parents_of.get(current.pk, [])
         father = next((p for p in parents if p.sex == Person.Sex.MALE), None)
         mother = next((p for p in parents if p.sex == Person.Sex.FEMALE), None)
@@ -52,16 +61,20 @@ def build_ancestors(person, depth=ANCESTOR_TREE_DEPTH):
             mother = unsexed.pop(0)
 
         last_generation = remaining <= 1
+        co_parent_pk = co_parent.pk if co_parent else None
         return {
             "person": current,
-            "father": None if last_generation or father is None else node(father, remaining - 1),
-            "mother": None if last_generation or mother is None else node(mother, remaining - 1),
+            "father": None if last_generation or father is None else node(father, remaining - 1, mother),
+            "mother": None if last_generation or mother is None else node(mother, remaining - 1, father),
             # Emplacements "+" pour compléter l'arbre là où il s'arrête, comme sur Geneanet.
             "father_slot": not last_generation and father is None,
             "mother_slot": not last_generation and mother is None,
             # L'arbre continue au-delà de ce qui est affiché : cliquer la carte recentre dessus.
             "has_hidden_ancestors": last_generation and bool(parents),
             "has_descendants": current.pk in people_with_children,
+            # Remariage : les autres conjoint(e)s de cette personne, hors celui/celle
+            # qui a donné l'enfant par lequel on est remonté jusqu'ici.
+            "other_spouses": [p for p in partners_of.get(current.pk, []) if p.pk != co_parent_pk],
         }
 
     return node(person, depth)

@@ -11,8 +11,8 @@
             <div>
                 <h1>{% icon "tree" %} {{ person.full_name }}</h1>
                 <p class="muted">
-                    Ascendance sur {{ generations }} générations — cliquer une carte ouvre sa fiche,
-                    la flèche {% icon "recenter" %} recentre l'arbre sur la personne.
+                    Ascendance sur {{ generations }} générations — cliquer-glisser pour se déplacer,
+                    cliquer une carte ouvre sa fiche, la flèche {% icon "recenter" %} recentre l'arbre.
                 </p>
             </div>
             <a href="{% url 'person-detail' person.pk %}" class="btn btn-secondary">{% icon "person" %} Voir la fiche</a>
@@ -76,13 +76,58 @@
     // L'arbre dépasse la largeur de l'écran dès 4-5 générations : on l'ouvre
     // cadré sur la personne d'ancrage plutôt qu'au bord gauche.
     function centerOnAnchor() {
-        var anchor = document.querySelector(".pedigree-tree > ul > li > .ped-cell");
+        var anchor = document.querySelector(".pedigree-tree > ul > li > .ped-cell-row");
         if (!wrap || !anchor) return;
         var w = wrap.getBoundingClientRect();
         var a = anchor.getBoundingClientRect();
         wrap.scrollLeft += (a.left + a.width / 2) - (w.left + w.width / 2);
     }
     centerOnAnchor();
+
+    // Déplacement à la souris, comme dans une visionneuse d'image (façon
+    // Geneanet) : plus besoin de la barre de défilement, qui reste cachée
+    // en CSS mais fonctionnelle (scrollLeft/scrollTop continuent d'agir).
+    (function enableDragPan() {
+        if (!wrap) return;
+        var dragging = false, moved = false, startX, startY, startLeft, startTop;
+
+        // Les cartes sont des liens <a> : sans ceci, le navigateur démarre son
+        // propre "glisser-déposer" natif du lien dès le premier mousemove, qui
+        // vole les événements et coupe court au glisser personnalisé ci-dessous.
+        wrap.addEventListener("dragstart", function (event) { event.preventDefault(); });
+
+        wrap.addEventListener("mousedown", function (event) {
+            if (event.button !== 0) return;
+            dragging = true;
+            moved = false;
+            startX = event.clientX;
+            startY = event.clientY;
+            startLeft = wrap.scrollLeft;
+            startTop = wrap.scrollTop;
+            wrap.classList.add("is-dragging");
+        });
+        window.addEventListener("mousemove", function (event) {
+            if (!dragging) return;
+            var dx = event.clientX - startX;
+            var dy = event.clientY - startY;
+            if (Math.abs(dx) > 3 || Math.abs(dy) > 3) moved = true;
+            wrap.scrollLeft = startLeft - dx;
+            wrap.scrollTop = startTop - dy;
+        });
+        window.addEventListener("mouseup", function () {
+            dragging = false;
+            wrap.classList.remove("is-dragging");
+        });
+        // Un vrai glisser ne doit pas aussi déclencher le clic qui ouvre le
+        // panneau (capture : s'exécute avant le gestionnaire de clic sur cartes).
+        wrap.addEventListener("click", function (event) {
+            if (moved) {
+                event.stopPropagation();
+                event.preventDefault();
+                moved = false;
+            }
+        }, true);
+    })();
 
     function closePanel() {
         panel.hidden = true;
