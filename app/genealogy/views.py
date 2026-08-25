@@ -1,6 +1,8 @@
+from collections import defaultdict
+
 from django.contrib import messages
 from django.db import transaction
-from django.db.models import Q
+from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
 from django.views.decorators.http import require_POST
@@ -19,28 +21,50 @@ from .forms import (
 from .gedcom_import import GedcomImportError, import_gedcom
 from .models import Parentage, Person, Union
 
-ANCESTOR_TREE_DEPTH = 4
+# Nombre de générations affichées dans le pedigree, personne d'ancrage comprise.
+ANCESTOR_TREE_DEPTH = 5
 
 
 def build_ancestors(person, depth=ANCESTOR_TREE_DEPTH):
-    """Structure binaire récursive {person, father, mother} pour le pedigree chart."""
+    """Pedigree ascendant récursif {person, father, mother} sur `depth` générations.
+
+    Toutes les filiations sont chargées en une seule requête puis l'arbre est
+    construit en mémoire : sur 5 générations le pedigree compte jusqu'à 31
+    nœuds, ce qui ferait autant de requêtes en interrogeant la base nœud à nœud.
+    """
     if person is None or depth <= 0:
         return None
 
-    parents = list(person.parents())
-    father = next((p for p in parents if p.sex == Person.Sex.MALE), None)
-    mother = next((p for p in parents if p.sex == Person.Sex.FEMALE), None)
-    remaining = [p for p in parents if p not in (father, mother)]
-    if father is None and remaining:
-        father = remaining.pop(0)
-    if mother is None and remaining:
-        mother = remaining.pop(0)
+    parents_of = defaultdict(list)
+    people_with_children = set()
+    for link in Parentage.objects.select_related("parent"):
+        parents_of[link.child_id].append(link.parent)
+        people_with_children.add(link.parent_id)
 
-    return {
-        "person": person,
-        "father": build_ancestors(father, depth - 1) if father else None,
-        "mother": build_ancestors(mother, depth - 1) if mother else None,
-    }
+    def node(current, remaining):
+        parents = parents_of.get(current.pk, [])
+        father = next((p for p in parents if p.sex == Person.Sex.MALE), None)
+        mother = next((p for p in parents if p.sex == Person.Sex.FEMALE), None)
+        unsexed = [p for p in parents if p is not father and p is not mother]
+        if father is None and unsexed:
+            father = unsexed.pop(0)
+        if mother is None and unsexed:
+            mother = unsexed.pop(0)
+
+        last_generation = remaining <= 1
+        return {
+            "person": current,
+            "father": None if last_generation or father is None else node(father, remaining - 1),
+            "mother": None if last_generation or mother is None else node(mother, remaining - 1),
+            # Emplacements "+" pour compléter l'arbre là où il s'arrête, comme sur Geneanet.
+            "father_slot": not last_generation and father is None,
+            "mother_slot": not last_generation and mother is None,
+            # L'arbre continue au-delà de ce qui est affiché : cliquer la carte recentre dessus.
+            "has_hidden_ancestors": last_generation and bool(parents),
+            "has_descendants": current.pk in people_with_children,
+        }
+
+    return node(person, depth)
 
 
 class PersonListView(ListView):
@@ -123,8 +147,13 @@ class PersonTreeView(DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["ancestors"] = build_ancestors(self.object)
+        context["generations"] = ANCESTOR_TREE_DEPTH
         context["partners"] = self.object.partners()
-        context["children"] = self.object.children()
+        # Les descendants directs portent aussi le point vert quand ils ont eux-mêmes
+        # de la descendance, comme les cartes du pedigree.
+        context["children"] = self.object.children().annotate(
+            child_count=Count("children_links")
+        )
         return context
 
 

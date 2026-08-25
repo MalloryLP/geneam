@@ -17,6 +17,8 @@
     --danger: #b3413c;
     --male: #4a6fa5;
     --female: #b5568a;
+    --anchor-bg: #1f6b4a;
+    --dot-green: #2e9e5b;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -68,11 +70,14 @@ a { color: var(--primary); }
     display: flex;
     align-items: center;
     gap: 0.6rem;
-    padding: 0 0.5rem;
+    padding: 0.35rem 0.5rem;
+    border-radius: 8px;
     font-size: 1.15rem;
     font-weight: 700;
     color: #fff;
+    text-decoration: none;
 }
+.sidebar-brand:hover { background: rgba(255, 255, 255, 0.08); }
 .sidebar-brand-icon { color: var(--male); }
 
 .sidebar-nav { display: flex; flex-direction: column; gap: 0.2rem; }
@@ -368,102 +373,163 @@ a { color: var(--primary); }
 }
 .relative-list .inline-form { margin-left: auto; }
 
-/* ============ Pedigree chart (façon Geneanet) ============ */
+/* ============ Pedigree vertical (façon Geneanet) ============ */
 .pedigree-wrapper {
     overflow-x: auto;
-    padding: 1.5rem 0;
+    padding: 1.5rem 0 0.5rem;
 }
-.pedigree-chart {
-    display: inline-flex;
+
+/* L'arbre est construit de haut en bas (racine = personne d'ancrage) puis
+   retourné verticalement, pour que l'ancrage se retrouve en bas et les
+   générations remontent — comme sur Geneanet. Les cartes sont re-retournées
+   individuellement afin de rester lisibles. */
+.pedigree-tree {
+    display: inline-block;
     min-width: 100%;
+    transform: scaleY(-1);
 }
-.pedigree-node {
+.pedigree-tree ul {
     display: flex;
-    align-items: center;
+    justify-content: center;
+    position: relative;
+    padding: 22px 0 0;
+    margin: 0;
+    list-style: none;
 }
-.pedigree-card, .pedigree-unknown {
-    display: flex;
+.pedigree-tree li {
+    position: relative;
+    padding: 22px 6px 0;
+    list-style: none;
+    text-align: center;
+}
+
+/* Équerres : demi-trait horizontal + trait vertical vers la génération suivante */
+.pedigree-tree li::before,
+.pedigree-tree li::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 50%;
+    width: 50%;
+    height: 22px;
+    border-top: 2px solid var(--tree-line);
+}
+.pedigree-tree li::after {
+    right: auto;
+    left: 50%;
+    border-left: 2px solid var(--tree-line);
+}
+/* La personne d'ancrage (seule à son niveau) n'a rien au-dessus d'elle */
+.pedigree-tree li:only-child::before,
+.pedigree-tree li:only-child::after { display: none; }
+.pedigree-tree li:only-child { padding-top: 0; }
+/* Pas de trait qui dépasse aux extrémités d'une fratrie */
+.pedigree-tree li:first-child::before,
+.pedigree-tree li:last-child::after { border: 0 none; }
+.pedigree-tree li:last-child::before {
+    border-right: 2px solid var(--tree-line);
+    border-radius: 0 6px 0 0;
+}
+.pedigree-tree li:first-child::after { border-radius: 6px 0 0 0; }
+/* Trait descendant d'une carte vers la rangée de ses parents */
+.pedigree-tree ul ul::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 0;
+    height: 22px;
+    border-left: 2px solid var(--tree-line);
+}
+
+/* ============ Carte personne du pedigree ============ */
+.ped-card {
+    position: relative;
+    display: inline-flex;
     flex-direction: column;
     justify-content: center;
-    min-width: 150px;
-    padding: 0.5rem 0.75rem;
+    align-items: flex-start;
+    width: 150px;
+    min-height: 52px;
+    padding: 0.4rem 0.6rem;
     border: 1px solid var(--border);
     border-radius: 8px;
     background: var(--card-bg);
     text-decoration: none;
     color: inherit;
-    font-size: 0.85rem;
-    white-space: nowrap;
-    position: relative;
-    z-index: 1;
+    font-size: 0.8rem;
+    text-align: left;
+    transform: scaleY(-1); /* annule le retournement du conteneur */
 }
-.pedigree-card:hover { border-color: var(--primary); }
-.pedigree-card.sex-m { border-left: 4px solid var(--male); }
-.pedigree-card.sex-f { border-left: 4px solid var(--female); }
-.pedigree-card.sex-o { border-left: 4px solid var(--muted); }
-.pedigree-unknown {
-    color: var(--muted);
-    font-style: italic;
+.ped-card:hover { border-color: var(--primary); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12); }
+/* Personne d'ancrage de l'arbre : mise en avant, comme la carte verte de Geneanet */
+.pedigree-tree > ul > li > .ped-card {
+    background: var(--anchor-bg);
+    border-color: var(--anchor-bg);
+    color: #fff;
+}
+.pedigree-tree > ul > li > .ped-card .ped-dates { color: rgba(255, 255, 255, 0.75); }
+.pedigree-tree > ul > li > .ped-card .ped-dot { box-shadow: 0 0 0 2px var(--anchor-bg); }
+.ped-card.sex-m { border-left: 4px solid var(--male); }
+.ped-card.sex-f { border-left: 4px solid var(--female); }
+.ped-card.sex-o { border-left: 4px solid var(--muted); }
+.ped-name {
+    font-weight: 600;
+    line-height: 1.25;
+    /* Les noms longs sont tronqués plutôt que d'élargir toute la génération */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+.ped-dates { font-size: 0.7rem; color: var(--muted); }
+
+/* Emplacement vide "+ Père / + Mère" là où l'arbre s'arrête */
+.ped-slot {
+    flex-direction: row;
+    align-items: center;
+    gap: 0.35rem;
+    justify-content: center;
     border-style: dashed;
+    border-left-width: 1px;
+    color: var(--muted);
+    min-height: 44px;
 }
-.pedigree-name { font-weight: 600; }
-.pedigree-dates { font-size: 0.75rem; color: var(--muted); }
+.ped-slot:hover { color: var(--primary); }
 
-.pedigree-parents {
-    display: flex;
-    flex-direction: column;
-    position: relative;
-    margin-left: 2.5rem;
-}
-/* trait horizontal reliant la carte de l'enfant au tronc vertical */
-.pedigree-parents::before {
-    content: "";
+/* Point vert : cette personne a de la descendance (comme Geneanet) */
+.ped-dot {
     position: absolute;
-    left: -2.5rem;
-    width: 1.25rem;
-    top: 50%;
-    border-top: 2px solid var(--tree-line);
+    right: 6px;
+    bottom: 6px;
+    width: 9px;
+    height: 9px;
+    border-radius: 999px;
+    background: var(--dot-green);
+    box-shadow: 0 0 0 2px var(--card-bg);
 }
-.pedigree-parent {
-    position: relative;
-    padding: 0.75rem 0;
-}
-/* trait horizontal reliant le tronc à la carte de ce parent */
-.pedigree-parent::before {
-    content: "";
+/* Chevron : des ancêtres existent au-delà de la dernière génération affichée */
+.ped-more {
     position: absolute;
-    left: -1.25rem;
-    width: 1.25rem;
-    top: 50%;
-    border-top: 2px solid var(--tree-line);
+    right: 4px;
+    top: 4px;
+    display: inline-flex;
+    color: var(--primary);
+    transform: rotate(-90deg);
 }
-/* moitié de tronc vertical : du milieu de la ligne vers le bord partagé avec l'autre parent */
-.pedigree-parent:first-child::after {
-    content: "";
-    position: absolute;
-    left: -1.25rem;
-    top: 50%;
-    bottom: 0;
-    border-left: 2px solid var(--tree-line);
-}
-.pedigree-parent:last-child::after {
-    content: "";
-    position: absolute;
-    left: -1.25rem;
-    top: 0;
-    bottom: 50%;
-    border-left: 2px solid var(--tree-line);
-}
+.ped-more .icon { width: 14px; height: 14px; }
 
-/* --- Personne d'ancrage : conjoint(e)s + enfants sous l'arbre --- */
+/* ============ Conjoint(e)s et enfants de la personne d'ancrage ============ */
 .anchor-family {
     margin-top: 1rem;
     padding-top: 1rem;
     border-top: 1px solid var(--border);
 }
+.anchor-family h2 { font-size: 1rem; margin: 0.75rem 0 0.5rem; }
 .anchor-partners {
     display: flex;
-    gap: 1rem;
+    gap: 0.75rem;
     flex-wrap: wrap;
-    margin-bottom: 1rem;
 }
+/* Hors de l'arbre retourné, les cartes ne doivent pas être retournées */
+.anchor-partners .ped-card { transform: none; }

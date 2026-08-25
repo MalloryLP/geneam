@@ -5,40 +5,66 @@
 {% block container_class %}container-wide{% endblock %}
 
 {% block content %}
-    <p><a href="{% url 'person-detail' person.pk %}">{% icon "chevron" "flip" %} Retour à la fiche de {{ person.full_name }}</a></p>
-    <h1>{% icon "tree" %} Arbre de {{ person.full_name }}</h1>
+    <div class="section-header">
+        <div>
+            <h1>{% icon "tree" %} {{ person.full_name }}</h1>
+            <p class="muted">Ascendance sur {{ generations }} générations — cliquer une carte repart de cette personne.</p>
+        </div>
+        <a href="{% url 'person-detail' person.pk %}" class="btn btn-secondary">{% icon "person" %} Voir la fiche</a>
+    </div>
 
     <div class="pedigree-wrapper">
-        <div class="pedigree-chart">
-            {% include "genealogy/_ancestors_node.html" with node=ancestors %}
+        <div class="pedigree-tree">
+            <ul>
+                {% include "genealogy/_ancestors_node.html" with node=ancestors %}
+            </ul>
         </div>
     </div>
 
-    <div class="anchor-family">
-        {% if partners %}
-            <div class="anchor-partners">
-                {% for partner in partners %}
-                    <a href="{% url 'person-tree' partner.pk %}" class="pedigree-card sex-{{ partner.sex|lower }}">
-                        <span class="pedigree-name">⚭ {{ partner.full_name }}</span>
-                        <span class="pedigree-dates">{% person_years partner %}</span>
-                    </a>
-                {% endfor %}
-            </div>
-        {% endif %}
+    <script>
+        // L'arbre est plus large que l'écran dès 4-5 générations : on l'ouvre centré
+        // sur la personne d'ancrage plutôt qu'au bord gauche.
+        (function () {
+            var wrap = document.querySelector(".pedigree-wrapper");
+            var anchor = document.querySelector(".pedigree-tree > ul > li > .ped-card");
+            if (!wrap || !anchor) return;
+            var w = wrap.getBoundingClientRect();
+            var a = anchor.getBoundingClientRect();
+            wrap.scrollLeft += (a.left + a.width / 2) - (w.left + w.width / 2);
+        })();
+    </script>
 
-        {% if children %}
-            <section class="anchor-children">
-                <h2>Enfants</h2>
-                <ul class="relative-list">
-                    {% for child in children %}
-                        <li>
-                            {% icon "person" %}
-                            <a href="{% url 'person-tree' child.pk %}">{{ child.full_name }}</a>
-                            <span class="muted">{% person_years child %}</span>
-                        </li>
+    {% if partners or children %}
+        <div class="anchor-family">
+            {% if partners %}
+                <h2>Conjoint(e)s</h2>
+                <div class="anchor-partners">
+                    {% for partner in partners %}
+                        <a href="{% url 'person-tree' partner.pk %}" class="ped-card sex-{{ partner.sex|lower }}">
+                            <span class="ped-name">⚭ {{ partner.full_name }}</span>
+                            <span class="ped-dates">{% person_years partner %}</span>
+                            {% if partner.children_links.exists %}
+                                <span class="ped-dot" title="A de la descendance"></span>
+                            {% endif %}
+                        </a>
                     {% endfor %}
-                </ul>
-            </section>
-        {% endif %}
-    </div>
+                </div>
+            {% endif %}
+
+            {% if children %}
+                <h2>Enfants</h2>
+                <div class="anchor-partners">
+                    {% for child in children %}
+                        <a href="{% url 'person-tree' child.pk %}" class="ped-card sex-{{ child.sex|lower }}">
+                            <span class="ped-name">{{ child.full_name }}</span>
+                            <span class="ped-dates">{% person_years child %}</span>
+                            {% if child.child_count %}
+                                <span class="ped-dot" title="A de la descendance"></span>
+                            {% endif %}
+                        </a>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+    {% endif %}
 {% endblock %}

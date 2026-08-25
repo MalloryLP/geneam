@@ -1,25 +1,40 @@
 {% load genealogy_extras %}
-<div class="pedigree-node">
-    <a href="{% url 'person-tree' node.person.pk %}" class="pedigree-card sex-{{ node.person.sex|lower }}" title="Voir l'arbre de {{ node.person.full_name }}">
-        <span class="pedigree-name">{{ node.person.full_name }}</span>
-        <span class="pedigree-dates">{% person_years node.person %}</span>
+<li>
+    <a href="{% url 'person-tree' node.person.pk %}"
+       class="ped-card sex-{{ node.person.sex|lower }}"
+       title="Centrer l'arbre sur {{ node.person.full_name }}">
+        <span class="ped-name">{{ node.person.full_name }}</span>
+        <span class="ped-dates">{% person_years node.person %}</span>
+        {% if node.has_descendants %}
+            <span class="ped-dot" title="A de la descendance"></span>
+        {% endif %}
+        {% if node.has_hidden_ancestors %}
+            <span class="ped-more" title="D'autres ancêtres existent — cliquer pour repartir de cette personne">{% icon "chevron" %}</span>
+        {% endif %}
     </a>
-    {% if node.father or node.mother %}
-        <div class="pedigree-parents">
-            <div class="pedigree-parent">
-                {% if node.father %}
-                    {% include "genealogy/_ancestors_node.html" with node=node.father %}
-                {% else %}
-                    <div class="pedigree-node"><span class="pedigree-card pedigree-unknown">Inconnu</span></div>
-                {% endif %}
-            </div>
-            <div class="pedigree-parent">
-                {% if node.mother %}
-                    {% include "genealogy/_ancestors_node.html" with node=node.mother %}
-                {% else %}
-                    <div class="pedigree-node"><span class="pedigree-card pedigree-unknown">Inconnue</span></div>
-                {% endif %}
-            </div>
-        </div>
+
+    {% if node.father or node.mother or node.father_slot or node.mother_slot %}
+        <ul>
+            {% if node.father %}
+                {% include "genealogy/_ancestors_node.html" with node=node.father %}
+            {% else %}
+                <li>
+                    <a href="{% url 'add-parent' node.person.pk %}" class="ped-card ped-slot"
+                       title="Ajouter le père de {{ node.person.full_name }}">
+                        {% icon "add" %}<span>Père</span>
+                    </a>
+                </li>
+            {% endif %}
+            {% if node.mother %}
+                {% include "genealogy/_ancestors_node.html" with node=node.mother %}
+            {% else %}
+                <li>
+                    <a href="{% url 'add-parent' node.person.pk %}" class="ped-card ped-slot"
+                       title="Ajouter la mère de {{ node.person.full_name }}">
+                        {% icon "add" %}<span>Mère</span>
+                    </a>
+                </li>
+            {% endif %}
+        </ul>
     {% endif %}
-</div>
+</li>
